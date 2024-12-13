@@ -131,6 +131,181 @@ const Results = ({ formData, resetCalculator }) => {
     }
   };
 
+  const generateRecommendations = () => {
+    const recommendations = [];
+
+    // Solar PV Recommendations
+    if (!formData.energy?.solarPV) {
+      const monthlyUnits = formData.energy?.electricityUnits || 
+        (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
+      const requiredKWP = (monthlyUnits * 12) / (365 * 4.5); // 4.5 units per day per KWp
+      const roundedKWP = Math.ceil(requiredKWP);
+      const carbonSaved = (monthlyUnits * 12 * 0.716) / 1000; // tons of CO2
+
+      if (roundedKWP > 0) {
+        recommendations.push({
+          title: 'Solar Power Installation',
+          description: `Installing a ${roundedKWP} kWp solar system could offset your entire electricity consumption and save approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually.`
+        });
+      }
+    }
+
+    // Solar Water Heater Recommendations
+    if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
+      const geysers = formData.energy.geysers;
+      const requiredCapacity = geysers * 100; // 100L per geyser
+      const annualElectricitySaved = geysers * 2 * 365; // 2 kWh per geyser per day
+      const carbonSaved = (annualElectricitySaved * 0.716) / 1000; // tons of CO2
+
+      recommendations.push({
+        title: 'Solar Water Heating',
+        description: `Installing a ${requiredCapacity}L solar water heater system could replace your ${geysers} geyser${geysers > 1 ? 's' : ''} and save approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually.`
+      });
+    }
+
+    // Commute Recommendations
+    if (formData.commute?.carType === 'suv') {
+      const distance = formData.commute?.fourWheelerDistance || 0;
+      const annualEmissions = distance * 0.2 * 260; // 0.2 kg/km for SUV, 260 working days
+      const publicTransportEmissions = distance * 0.04 * 260; // 0.04 kg/km for public transport
+      const carbonSaved = (annualEmissions - publicTransportEmissions) / 1000;
+
+      recommendations.push({
+        title: 'Commute Alternatives',
+        description: `Switching from SUV to public transport for your ${distance}km daily commute could save approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually. Consider carpooling or public transportation.`
+      });
+    }
+
+    // Travel Recommendations
+    const totalFlights = (formData.travel?.domesticShortFlights || 0) + 
+                        (formData.travel?.domesticLongFlights || 0) +
+                        (formData.travel?.internationalFlights || 0);
+    if (totalFlights > 6) {
+      recommendations.push({
+        title: 'Air Travel',
+        description: 'Consider reducing air travel and opt for virtual meetings when possible. For domestic travel, consider train journeys which have significantly lower emissions.'
+      });
+    }
+
+    // Diet Recommendations
+    if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
+      const meatMeals = (formData.lifestyle?.chickenFishMeals || 0) + 
+                       (formData.lifestyle?.redMeatMeals || 0);
+      const potentialSaving = (meatMeals * 52 * 0.5) / 1000; // 0.5 kg CO2e saved per meal
+
+      recommendations.push({
+        title: 'Dietary Changes',
+        description: `Reducing meat consumption by half and replacing with plant-based meals could save approximately ${potentialSaving.toFixed(2)} tons of CO₂e annually.`
+      });
+    }
+
+    // Composting Recommendations
+    if (formData.lifestyle?.compostOption === 'no') {
+      const annualWaste = 0.2 * 365; // 0.2 kg per day
+      const currentEmissions = annualWaste * 1.29; // landfill factor
+      const compostEmissions = annualWaste * 0.32; // composting factor
+      const carbonSaved = (currentEmissions - compostEmissions) / 1000;
+
+      recommendations.push({
+        title: 'Waste Management',
+        description: `Starting composting could reduce your waste emissions by approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually.`
+      });
+    }
+
+    return recommendations;
+  };
+
+  const calculateSavingsSummary = () => {
+    const savings = {
+      solarPV: 0,
+      solarWater: 0,
+      commute: 0,
+      diet: 0,
+      composting: 0
+    };
+
+    // Solar PV Savings
+    if (!formData.energy?.solarPV) {
+      const monthlyUnits = formData.energy?.electricityUnits || 
+        (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
+      savings.solarPV = (monthlyUnits * 12 * 0.716) / 1000;
+    }
+
+    // Solar Water Heater Savings
+    if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
+      const geysers = formData.energy.geysers;
+      const annualElectricitySaved = geysers * 2 * 365;
+      savings.solarWater = (annualElectricitySaved * 0.716) / 1000;
+    }
+
+    // Commute Savings
+    if (formData.commute?.carType === 'suv') {
+      const distance = formData.commute?.fourWheelerDistance || 0;
+      const annualEmissions = distance * 0.2 * 260;
+      const publicTransportEmissions = distance * 0.04 * 260;
+      savings.commute = (annualEmissions - publicTransportEmissions) / 1000;
+    }
+
+    // Diet Savings
+    if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
+      const meatMeals = (formData.lifestyle?.chickenFishMeals || 0) + 
+                       (formData.lifestyle?.redMeatMeals || 0);
+      savings.diet = (meatMeals * 52 * 0.5) / 1000;
+    }
+
+    // Composting Savings
+    if (formData.lifestyle?.compostOption === 'no') {
+      const annualWaste = 0.2 * 365;
+      const currentEmissions = annualWaste * 1.29;
+      const compostEmissions = annualWaste * 0.32;
+      savings.composting = (currentEmissions - compostEmissions) / 1000;
+    }
+
+    return savings;
+  };
+
+  const savingsSummary = calculateSavingsSummary();
+  const totalPotentialSavings = Object.values(savingsSummary).reduce((a, b) => a + b, 0);
+  const remainingEmissions = currentResult?.total - totalPotentialSavings;
+
+  const savingsChartData = {
+    labels: [
+      'Remaining Emissions',
+      'Solar PV Savings',
+      'Solar Water Heater Savings',
+      'Commute Savings',
+      'Diet Changes Savings',
+      'Composting Savings'
+    ],
+    datasets: [{
+      data: [
+        Math.max(0, remainingEmissions),
+        savingsSummary.solarPV,
+        savingsSummary.solarWater,
+        savingsSummary.commute,
+        savingsSummary.diet,
+        savingsSummary.composting
+      ],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.8)',  // Red for remaining emissions
+        'rgba(75, 192, 192, 0.8)',  // Green for savings
+        'rgba(54, 162, 235, 0.8)',
+        'rgba(255, 206, 86, 0.8)',
+        'rgba(153, 102, 255, 0.8)',
+        'rgba(255, 159, 64, 0.8)'
+      ],
+      borderColor: [
+        'rgba(255, 99, 132, 1)',
+        'rgba(75, 192, 192, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(255, 206, 86, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
   return (
     <div className="section-container max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -214,18 +389,41 @@ const Results = ({ formData, resetCalculator }) => {
         </div>
       </div>
 
-      {/* Recommendations Section */}
+      {/* Updated Recommendations Section */}
       <div className="mt-8 text-left">
-        <h3 className="text-xl font-semibold mb-4">Recommendations</h3>
-        <div className="space-y-4">
-          <p className="text-gray-700">Based on your carbon footprint, here are some suggestions to reduce your impact:</p>
-          <ul className="list-disc list-inside space-y-2 text-gray-700">
-            <li>Consider using public transportation or carpooling more frequently</li>
-            <li>Switch to energy-efficient appliances</li>
-            <li>Reduce meat consumption and opt for more plant-based meals</li>
-            <li>Install solar panels or switch to renewable energy sources</li>
-            <li>Practice composting and reduce waste generation</li>
-          </ul>
+        <h3 className="text-xl font-semibold mb-4">Personalized Recommendations</h3>
+        <div className="space-y-6">
+          {generateRecommendations().map((rec, index) => (
+            <div key={index} className="bg-white p-4 rounded-lg shadow">
+              <h4 className="font-medium text-green-600 mb-2">{rec.title}</h4>
+              <p className="text-gray-700">{rec.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Potential Savings Summary */}
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold mb-4">Potential Emission Reductions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="card-responsive">
+            <div className="aspect-square">
+              <Pie data={savingsChartData} options={{ maintainAspectRatio: true }} />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h4 className="font-medium text-green-600 mb-2">Total Potential Savings</h4>
+              <p className="text-2xl font-bold">{totalPotentialSavings.toFixed(2)} Tons CO₂e</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {((totalPotentialSavings / currentResult?.total) * 100).toFixed(1)}% reduction from current emissions
+              </p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow">
+              <h4 className="font-medium text-red-600 mb-2">Remaining Emissions After Changes</h4>
+              <p className="text-2xl font-bold">{remainingEmissions.toFixed(2)} Tons CO₂e</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
