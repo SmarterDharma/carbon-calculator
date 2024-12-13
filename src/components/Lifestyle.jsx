@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Lifestyle = ({ formData, updateFormData, nextBucket }) => {
+const Lifestyle = ({ formData, updateFormData }) => {
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     const finalValue = type === 'range' ? parseInt(value) : value;
@@ -320,10 +320,6 @@ const Lifestyle = ({ formData, updateFormData, nextBucket }) => {
             </div>
           </div>
         </div>
-
-        <button onClick={nextBucket} className="button">
-          Submit
-        </button>
       </div>
     </div>
   );

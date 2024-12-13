@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Travel = ({ formData, updateFormData, nextBucket }) => {
+const Travel = ({ formData, updateFormData }) => {
   const handleCountChange = (name, delta) => {
     const currentValue = formData?.[name] || 0;
     const newValue = Math.max(0, currentValue + delta);
@@ -313,10 +313,6 @@ const Travel = ({ formData, updateFormData, nextBucket }) => {
             </div>
           )}
         </div>
-
-        <button onClick={nextBucket} className="button">
-          Next
-        </button>
       </div>
     </div>
   );

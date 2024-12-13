@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Energy = ({ formData, updateFormData, nextBucket }) => {
+const Energy = ({ formData, updateFormData }) => {
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     let finalValue = value;
@@ -301,10 +301,6 @@ const Energy = ({ formData, updateFormData, nextBucket }) => {
             )}
           </div>
         </div>
-
-        <button onClick={nextBucket} className="button">
-          Next
-        </button>
       </div>
     </div>
   );

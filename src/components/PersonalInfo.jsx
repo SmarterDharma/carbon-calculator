@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const PersonalInfo = ({ formData, updateFormData, nextBucket }) => {
+const PersonalInfo = ({ formData, updateFormData }) => {
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
@@ -44,7 +44,7 @@ const PersonalInfo = ({ formData, updateFormData, nextBucket }) => {
 
   const handleNext = () => {
     if (validateForm()) {
-      nextBucket();
+      // nextBucket();
     }
   };
 
@@ -162,13 +162,6 @@ const PersonalInfo = ({ formData, updateFormData, nextBucket }) => {
             </p>
           </div>
         </div>
-
-        <button 
-          onClick={handleNext} 
-          className="button w-full md:w-auto"
-        >
-          Next
-        </button>
       </div>
     </div>
   );

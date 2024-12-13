@@ -15,9 +15,15 @@ ChartJS.register(
   Title
 );
 
-const Results = ({ formData }) => {
+const Results = ({ formData, resetCalculator }) => {
   const [savedResults, setSavedResults] = useState([]);
   const [currentResult, setCurrentResult] = useState(null);
+
+  const handleRetake = () => {
+    if (window.confirm('Are you sure you want to retake the calculator? All current data will be lost.')) {
+      resetCalculator();
+    }
+  };
 
   const calculateFootprints = () => {
     // Energy Footprint Calculation
@@ -66,81 +72,7 @@ const Results = ({ formData }) => {
     setSavedResults(allResults);
   }, [formData]);
 
-  // Add a section to show historical results
-  const renderHistoricalResults = () => {
-    if (savedResults.length <= 1) return null;
-
-    return (
-      <div className="mt-8">
-        <h3 className="text-xl font-semibold mb-4">Previous Results</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead>
-              <tr>
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Total (Ton CO₂e)</th>
-                <th className="px-4 py-2">Energy</th>
-                <th className="px-4 py-2">Commute</th>
-                <th className="px-4 py-2">Travel</th>
-                <th className="px-4 py-2">Lifestyle</th>
-              </tr>
-            </thead>
-            <tbody>
-              {savedResults
-                .slice()
-                .reverse()
-                .slice(1) // Skip current result
-                .map(result => (
-                  <tr key={result.id}>
-                    <td className="border px-4 py-2">
-                      {new Date(result.timestamp).toLocaleDateString()}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {result.total.toFixed(2)}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {result.energy.toFixed(2)}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {result.commute.toFixed(2)}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {result.travel.toFixed(2)}
-                    </td>
-                    <td className="border px-4 py-2">
-                      {result.lifestyle.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  };
-
-  // Add progress comparison if there are previous results
-  const renderProgress = () => {
-    if (savedResults.length <= 1) return null;
-
-    const previousResult = savedResults[savedResults.length - 2];
-    const currentTotal = currentResult?.total || 0;
-    const previousTotal = previousResult?.total || 0;
-    const difference = currentTotal - previousTotal;
-    const percentageChange = (difference / previousTotal) * 100;
-
-    return (
-      <div className="mt-4 p-4 rounded-lg bg-gray-50">
-        <h4 className="font-medium mb-2">Comparison with Previous Result</h4>
-        <p className={`${difference < 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {difference < 0 ? 'Decreased' : 'Increased'} by{' '}
-          {Math.abs(percentageChange).toFixed(1)}% 
-          ({Math.abs(difference).toFixed(2)} Ton CO₂e)
-        </p>
-      </div>
-    );
-  };
-
+  // Chart configurations
   const pieChartData = {
     labels: ['Energy', 'Commute', 'Travel', 'Lifestyle'],
     datasets: [{
@@ -200,31 +132,40 @@ const Results = ({ formData }) => {
 
   return (
     <div className="section-container max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Results</h2>
-      
-      <div className="mb-8 text-center">
-        <p className="text-lg mb-2">
-          Dear <span className="text-green-600 font-semibold">{formData.personal?.name}</span>,
-          here's your Personal Carbon Story
-        </p>
-        <p className="text-gray-600">
-          A closer look at how you contribute to global emissions
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Results</h2>
+        <button
+          onClick={handleRetake}
+          className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+        >
+          Retake Calculator
+        </button>
       </div>
 
-      {/* Total Footprint Display */}
-      <div className="bg-white rounded-lg shadow-lg p-8 mb-8 text-center">
-        <h1 className="text-5xl font-bold text-green-600 mb-2">
-          {currentResult?.total.toFixed(2) || 0}
-        </h1>
+      {/* User Info */}
+      <div className="mb-8 text-left">
+        <h3 className="text-xl font-semibold mb-4">User Information</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <p><span className="font-medium">Name:</span> {formData.personal?.name}</p>
+          <p><span className="font-medium">Email:</span> {formData.personal?.email}</p>
+          <p><span className="font-medium">Age:</span> {formData.personal?.age}</p>
+          <p><span className="font-medium">Household Size:</span> {formData.personal?.household}</p>
+        </div>
+      </div>
+
+      {/* Total Footprint */}
+      <div className="text-center mb-8">
+        <h3 className="text-3xl font-bold text-green-600">
+          {currentResult?.total.toFixed(2)}
+        </h3>
         <p className="text-gray-600">Annual Carbon Footprint in Ton CO₂e</p>
       </div>
 
       {/* Individual Footprints */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <div className="bg-white p-4 rounded-lg shadow">
           <p className="flex justify-between">
-            <span>Energy Consumption:</span>
+            <span>Energy:</span>
             <span className="font-bold text-green-600">
               {currentResult?.energy.toFixed(2) || 0} Kg CO₂e
             </span>
@@ -257,22 +198,35 @@ const Results = ({ formData }) => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white p-4 rounded-lg shadow">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-8">
+        <div className="card-responsive">
           <h3 className="text-lg font-semibold mb-4">Footprint Breakdown</h3>
-          <Pie data={pieChartData} />
+          <div className="aspect-square">
+            <Pie data={pieChartData} options={{ maintainAspectRatio: true }} />
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="card-responsive">
           <h3 className="text-lg font-semibold mb-4">Comparison</h3>
-          <Bar data={barChartData} options={barChartOptions} />
+          <div className="aspect-square">
+            <Bar data={barChartData} options={{ ...barChartOptions, maintainAspectRatio: true }} />
+          </div>
         </div>
       </div>
 
-      {/* Add progress comparison */}
-      {renderProgress()}
-
-      {/* Add historical results */}
-      {renderHistoricalResults()}
+      {/* Recommendations Section */}
+      <div className="mt-8 text-left">
+        <h3 className="text-xl font-semibold mb-4">Recommendations</h3>
+        <div className="space-y-4">
+          <p className="text-gray-700">Based on your carbon footprint, here are some suggestions to reduce your impact:</p>
+          <ul className="list-disc list-inside space-y-2 text-gray-700">
+            <li>Consider using public transportation or carpooling more frequently</li>
+            <li>Switch to energy-efficient appliances</li>
+            <li>Reduce meat consumption and opt for more plant-based meals</li>
+            <li>Install solar panels or switch to renewable energy sources</li>
+            <li>Practice composting and reduce waste generation</li>
+          </ul>
+        </div>
+      </div>
     </div>
   );
 };

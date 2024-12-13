@@ -1,28 +1,54 @@
 import React from 'react';
 
-const Navigation = ({ activeBucket, setActiveBucket }) => {
+const Navigation = ({ activeBucket }) => {
   const navItems = [
-    { id: 'personal', icon: '👤', label: 'Personal Info' },
-    { id: 'energy', icon: '⚡', label: 'Energy' },
-    { id: 'commute', icon: '🚗', label: 'Commute' },
-    { id: 'travel', icon: '✈️', label: 'Travel' },
-    { id: 'lifestyle', icon: '🏠', label: 'Lifestyle' },
-    { id: 'result', icon: '📊', label: 'Result' }
+    { id: 'personal', label: 'Personal Info' },
+    { id: 'energy', label: 'Energy' },
+    { id: 'commute', label: 'Commute' },
+    { id: 'travel', label: 'Travel' },
+    { id: 'lifestyle', label: 'Lifestyle' },
+    { id: 'result', label: 'Results' }
   ];
 
+  // Calculate progress percentage
+  const currentIndex = navItems.findIndex(item => item.id === activeBucket);
+  const progress = ((currentIndex + 1) / navItems.length) * 100;
+
   return (
-    <nav className="bg-gray-800 sticky top-0 z-50">
-      <div className="container mx-auto flex justify-around py-3">
-        {navItems.map(item => (
-          <div
-            key={item.id}
-            onClick={() => setActiveBucket(item.id)}
-            className={`nav-icon ${activeBucket === item.id ? 'active' : ''}`}
-          >
-            <span className="mr-1">{item.icon}</span>
-            {item.label}
+    <nav className="bg-white shadow-md sticky top-0 z-50">
+      <div className="container mx-auto px-4">
+        {/* Progress Bar */}
+        <div className="relative pt-4">
+          <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+            <div 
+              style={{ width: `${progress}%` }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500 transition-all duration-500"
+            ></div>
           </div>
-        ))}
+          {/* Step Indicators */}
+          <div className="flex justify-between">
+            {navItems.map((item, index) => (
+              <div 
+                key={item.id}
+                className="flex flex-col items-center"
+              >
+                <div className={`
+                  w-6 h-6 rounded-full border-2 flex items-center justify-center
+                  text-xs font-semibold mb-1
+                  ${index <= currentIndex ? 'border-green-500 bg-green-500 text-white' : 'border-gray-300 text-gray-300'}
+                `}>
+                  {index + 1}
+                </div>
+                <span className={`
+                  text-xs hidden md:block
+                  ${index <= currentIndex ? 'text-green-500 font-medium' : 'text-gray-400'}
+                `}>
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </nav>
   );

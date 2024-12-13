@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Commute = ({ formData, updateFormData, nextBucket }) => {
+const Commute = ({ formData, updateFormData }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     updateFormData('commute', { [name]: value });
@@ -348,10 +348,6 @@ const Commute = ({ formData, updateFormData, nextBucket }) => {
             ))}
           </div>
         </div>
-
-        <button onClick={nextBucket} className="button">
-          Next
-        </button>
       </div>
     </div>
   );
