@@ -16,38 +16,6 @@ const PersonalInfo = ({ formData, updateFormData }) => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    const fields = {
-      name: 'Name',
-      email: 'Email ID',
-      age: 'Age',
-      gender: 'Gender',
-      pincode: 'Pincode',
-      household: 'Number of people in household'
-    };
-
-    Object.entries(fields).forEach(([field, label]) => {
-      if (!formData?.[field]) {
-        newErrors[field] = `${label} is required`;
-      }
-    });
-
-    // Email validation
-    if (formData?.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNext = () => {
-    if (validateForm()) {
-      // nextBucket();
-    }
-  };
-
   const getInputClassName = (fieldName) => {
     return `input-field ${errors[fieldName] ? 'border-red-500' : ''}`;
   };

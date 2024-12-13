@@ -7,38 +7,6 @@ const Lifestyle = ({ formData, updateFormData }) => {
     updateFormData('lifestyle', { [name]: finalValue });
   };
 
-  const renderCounterInput = (name) => (
-    <div className="flex items-center gap-4">
-      <button
-        onClick={() => handleCountChange(name, -1)}
-        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none"
-      >
-        <span className="text-xl font-medium">-</span>
-      </button>
-      <input
-        type="number"
-        name={name}
-        min="0"
-        max="50"
-        value={formData?.[name] || 0}
-        onChange={(e) => updateFormData('lifestyle', { [name]: Math.max(0, parseInt(e.target.value) || 0) })}
-        className="w-20 text-center input-field"
-      />
-      <button
-        onClick={() => handleCountChange(name, 1)}
-        className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none"
-      >
-        <span className="text-xl font-medium">+</span>
-      </button>
-    </div>
-  );
-
-  const handleCountChange = (name, delta) => {
-    const currentValue = formData?.[name] || 0;
-    const newValue = Math.max(0, currentValue + delta);
-    updateFormData('lifestyle', { [name]: newValue });
-  };
-
   return (
     <div className="section-container max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-6">Lifestyle</h2>
