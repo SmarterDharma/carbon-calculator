@@ -356,56 +356,113 @@ const calculateTravelFootprint = (travelData) => {
   if (!travelData) return 0;
   
   const FLIGHT_FACTORS = {
-    shortHaul: 0.121,
-    mediumHaul: 0.121,
-    longHaul: 0.0741,
-    ultraLongHaul: 0.007963
+    // Domestic Flights (kg CO2 per km)
+    domesticVeryShort: 0.145, // Higher per km due to takeoff/landing
+    domesticShort: 0.133,
+    domesticMedium: 0.127,
+    domesticLong: 0.121,
+    
+    // International Flights
+    internationalShort: 0.121,
+    internationalMedium: 0.110,
+    internationalLong: 0.095,
+    internationalUltraLong: 0.085
   };
 
-  // Calculate flight emissions
-  const flightEmissions = 
-    (travelData.shortHaulFlights || 0) * 1000 * FLIGHT_FACTORS.shortHaul +
-    (travelData.mediumHaulFlights || 0) * 2750 * FLIGHT_FACTORS.mediumHaul +
-    (travelData.longHaulFlights || 0) * 6500 * FLIGHT_FACTORS.longHaul +
-    (travelData.ultraLongHaulFlights || 0) * 12000 * FLIGHT_FACTORS.ultraLongHaul;
+  const TRAIN_FACTORS = {
+    localTrain: 0.029,      // kg CO2 per km
+    shortTrain: 0.027,
+    mediumTrain: 0.025,
+    longTrain: 0.024
+  };
 
-  return flightEmissions;
+  const CAR_FACTORS = {
+    gasolineLocal: 0.171,   // kg CO2 per km
+    gasolineShort: 0.165,
+    gasolineMedium: 0.160,
+    gasolineLong: 0.155,
+    
+    electricLocal: 0.053,   // kg CO2 per km
+    electricShort: 0.051,
+    electricMedium: 0.049,
+    electricLong: 0.047
+  };
+
+  // Calculate domestic flight emissions
+  const domesticFlightEmissions = 
+    (travelData.domesticVeryShortFlights || 0) * 500 * FLIGHT_FACTORS.domesticVeryShort +
+    (travelData.domesticShortFlights || 0) * 1000 * FLIGHT_FACTORS.domesticShort +
+    (travelData.domesticMediumFlights || 0) * 2000 * FLIGHT_FACTORS.domesticMedium +
+    (travelData.domesticLongFlights || 0) * 2500 * FLIGHT_FACTORS.domesticLong;
+
+  // Calculate international flight emissions
+  const internationalFlightEmissions = 
+    (travelData.internationalShortFlights || 0) * 3000 * FLIGHT_FACTORS.internationalShort +
+    (travelData.internationalMediumFlights || 0) * 6000 * FLIGHT_FACTORS.internationalMedium +
+    (travelData.internationalLongFlights || 0) * 10000 * FLIGHT_FACTORS.internationalLong +
+    (travelData.internationalUltraLongFlights || 0) * 12000 * FLIGHT_FACTORS.internationalUltraLong;
+
+  // Calculate train journey emissions
+  const trainEmissions = 
+    (travelData.localTrainJourneys || 0) * 100 * TRAIN_FACTORS.localTrain +
+    (travelData.shortTrainJourneys || 0) * 300 * TRAIN_FACTORS.shortTrain +
+    (travelData.mediumTrainJourneys || 0) * 800 * TRAIN_FACTORS.mediumTrain +
+    (travelData.longTrainJourneys || 0) * 1200 * TRAIN_FACTORS.longTrain;
+
+  // Calculate gasoline car emissions
+  const gasolineCarEmissions = 
+    (travelData.localGasolineTrips || 0) * 100 * CAR_FACTORS.gasolineLocal +
+    (travelData.shortGasolineTrips || 0) * 300 * CAR_FACTORS.gasolineShort +
+    (travelData.mediumGasolineTrips || 0) * 800 * CAR_FACTORS.gasolineMedium +
+    (travelData.longGasolineTrips || 0) * 1200 * CAR_FACTORS.gasolineLong;
+
+  // Calculate electric car emissions
+  const electricCarEmissions = 
+    (travelData.localElectricTrips || 0) * 100 * CAR_FACTORS.electricLocal +
+    (travelData.shortElectricTrips || 0) * 300 * CAR_FACTORS.electricShort +
+    (travelData.mediumElectricTrips || 0) * 800 * CAR_FACTORS.electricMedium +
+    (travelData.longElectricTrips || 0) * 1200 * CAR_FACTORS.electricLong;
+
+  return domesticFlightEmissions + internationalFlightEmissions + trainEmissions + 
+         gasolineCarEmissions + electricCarEmissions;
 };
 
 const calculateLifestyleFootprint = (lifestyleData) => {
   if (!lifestyleData) return 0;
   
   const MEAL_FACTORS = {
-    vegan: 0.575,
-    vegetarian: 0.66,
-    ovoVegetarian: 0.675,
-    nonVeg: 0.71,
-    redMeat: 1
+    plantBased: 0.42,      // kg CO2e per meal
+    vegetarian: 0.52,
+    egg: 0.62,
+    chickenFish: 0.72,
+    redMeat: 1.05
   };
 
   const WASTE_FACTORS = {
-    composting: 0.32,   // kg CO2e per kg of waste
-    landfilling: 1.29   // kg CO2e per kg of waste
+    composting: 0.32,
+    landfilling: 1.29
   };
 
   const FASHION_FACTORS = {
-    once: 100,      // kg CO2e per month
-    twice: 200,     // kg CO2e per month
-    thrice: 300     // kg CO2e per month
+    once: 100,
+    twice: 200,
+    thrice: 300
   };
 
   let totalEmissions = 0;
 
-  // Calculate food emissions
+  // Calculate food emissions (52 weeks per year)
   if (lifestyleData.selectedDiet === 'vegan') {
-    totalEmissions += (lifestyleData.veganMeals || 0) * MEAL_FACTORS.vegan * 52;
+    totalEmissions += (lifestyleData.plantBasedMeals || 0) * MEAL_FACTORS.plantBased * 52;
   } else if (lifestyleData.selectedDiet === 'vegetarian') {
     totalEmissions += (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * 52;
   } else if (lifestyleData.selectedDiet === 'ovoVegetarian') {
-    totalEmissions += (lifestyleData.eggMeals || 0) * MEAL_FACTORS.ovoVegetarian * 52;
+    totalEmissions += (lifestyleData.eggMeals || 0) * MEAL_FACTORS.egg * 52;
+    totalEmissions += (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * 52;
   } else if (lifestyleData.selectedDiet === 'nonVegetarian') {
-    totalEmissions += (lifestyleData.nonVegMeals || 0) * MEAL_FACTORS.nonVeg * 52;
+    totalEmissions += (lifestyleData.chickenFishMeals || 0) * MEAL_FACTORS.chickenFish * 52;
     totalEmissions += (lifestyleData.redMeatMeals || 0) * MEAL_FACTORS.redMeat * 52;
+    totalEmissions += (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * 52;
   }
 
   // Calculate waste emissions
