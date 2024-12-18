@@ -169,6 +169,11 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <header className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-center text-gray-800">Dharma Meter</h1>
+        </div>
+      </header>
       <Navigation activeBucket={activeBucket} />
       <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         {renderActiveBucket()}
