@@ -13,8 +13,10 @@ import {
   MEAL_FACTORS,
   WASTE_FACTORS,
   FASHION_FACTORS,
-  CHART_COLORS
+  CHART_COLORS,
+  ELECTRICITY_RATES
 } from '../constants';
+import { calculateUnitsFromBill } from './utils';
 
 // Register ChartJS components
 ChartJS.register(
@@ -38,8 +40,7 @@ const Results = ({ formData, resetCalculator }) => {
   };
 
   const calculateFootprints = () => {
-    // Energy Footprint Calculation
-    const energyFootprint = calculateEnergyFootprint(formData.energy);
+    const energyFootprint = calculateEnergyFootprint(formData.energy, formData.personal);
     const commuteFootprint = calculateCommuteFootprint(formData.commute);
     const travelFootprint = calculateTravelFootprint(formData.travel);
     const lifestyleFootprint = calculateLifestyleFootprint(formData.lifestyle);
@@ -432,11 +433,21 @@ const Results = ({ formData, resetCalculator }) => {
 };
 
 // Calculation functions
-const calculateEnergyFootprint = (energyData) => {
+const calculateEnergyFootprint = (energyData, personalData) => {
   if (!energyData) return 0;
   
-  const electricityUnits = energyData.electricityUnits || 
-    (energyData.dontKnowUnits ? (energyData.electricityBill || 0) / ENERGY_FACTORS.ELECTRICITY_BILL_TO_UNITS : 0);
+  let electricityUnits;
+  
+  if (energyData.dontKnowUnits && energyData.electricityBill) {
+    electricityUnits = calculateUnitsFromBill(
+      energyData.electricityBill,
+      energyData.pincode || personalData?.pincode
+    );
+  } else if (energyData.electricityUnits) {
+  electricityUnits = energyData.electricityUnits;
+  } else {
+    electricityUnits = 0;
+  }
   
   const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY;
   const lpgFootprint = (energyData.lpgCylinders || 0) * ENERGY_FACTORS.LPG;

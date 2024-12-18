@@ -5,6 +5,88 @@ export const ENERGY_FACTORS = {
   ELECTRICITY_BILL_TO_UNITS: 7.11 // conversion rate from bill to units
 };
 
+// Electricity rates by city pincodes
+export const ELECTRICITY_RATES = {
+  "400": [ // Mumbai
+    { maxUnits: 10, rate: 27 },
+    { maxUnits: 100, rate: 5 },
+    { maxUnits: 300, rate: 6 },
+    { maxUnits: 500, rate: 7 },
+    { maxUnits: Infinity, rate: 8 }
+  ],
+  "110": [ // Delhi
+    { maxUnits: 10, rate: 17 },
+    { maxUnits: 100, rate: 8 },
+    { maxUnits: 400, rate: 5 },
+    { maxUnits: 1200, rate: 7 },
+    { maxUnits: 1500, rate: 8 }
+  ],
+  "560": [ // Bangalore
+    { maxUnits: 45, rate: 5.9, fixedCharge: 120 },
+    { maxUnits: 90, rate: 5.9, fixedCharge: 240 },
+    { maxUnits: 135, rate: 5.9, fixedCharge: 360 },
+    { maxUnits: 180, rate: 5.9, fixedCharge: 480 },
+    { maxUnits: Infinity, rate: 5.9, fixedCharge: 600 }
+  ],
+  "600": [ // Chennai
+    { maxUnits: 200, rate: 4.8, whelingChargePerUnit: 1.59},
+    { maxUnits: 250, rate: 6.45, whelingChargePerUnit: 1.59 },
+    { maxUnits: 300, rate: 8.5, whelingChargePerUnit: 1.59 },
+    { maxUnits: 400, rate: 9.65, whelingChargePerUnit: 1.59 },
+    { maxUnits: 500, rate: 10.7, whelingChargePerUnit: 1.59 },
+    { maxUnits: Infinity, rate: 11.8, whelingChargePerUnit: 1.59 }
+  ],
+  "500": [ // Hyderabad
+    { maxUnits: 20, rate: 22 },
+    { maxUnits: 100, rate: 6 },
+    { maxUnits: 400, rate: 7 },
+    { maxUnits: Infinity, rate: 10 }
+  ],
+  "682": [ // Cochin
+    { maxUnits: 20, rate: 17 },
+    { maxUnits: 100, rate: 5 },
+    { maxUnits: 500, rate: 8 },
+    { maxUnits: Infinity, rate: 9 }
+  ],
+  "530": [ // Vizag
+    { maxUnits: 20, rate: 21 },
+    { maxUnits: 100, rate: 7 },
+    { maxUnits: 225, rate: 10 },
+    { maxUnits: Infinity, rate: 11 }
+  ],
+  "700": [ // Kolkata
+    { maxUnits: 20, rate: 12 },
+    { maxUnits: 300, rate: 9 },
+    { maxUnits: Infinity, rate: 11 }
+  ],
+  "751": [ // Bhubaneswar
+    { maxUnits: 30, rate: 3 },
+    { maxUnits: 100, rate: 11 },
+    { maxUnits: 500, rate: 8 },
+    { maxUnits: Infinity, rate: 7 }
+  ],
+  "160": [ // Chandigarh
+    { maxUnits: 10, rate: 8 },
+    { maxUnits: 150, rate: 3 },
+    { maxUnits: 400, rate: 4 },
+    { maxUnits: Infinity, rate: 5 }
+  ],
+  "411": [ // Pune
+    { maxUnits: 10, rate: 19 },
+    { maxUnits: 100, rate: 9 },
+    { maxUnits: 676, rate: 6 },
+    { maxUnits: Infinity, rate: 5 }
+  ],
+  "380": [ // Ahmedabad
+    { maxUnits: 30, rate: 14 },
+    { maxUnits: Infinity, rate: 5 }
+  ],
+  "default": [ // Any other pincode
+    { maxUnits: 50, rate: 18.9 },
+    { maxUnits: Infinity, rate: 7.6 }
+  ]
+};
+
 // Commute Emission Factors (kg CO2 per km)
 export const COMMUTE_FACTORS = {
   'walk-cycle': 0,

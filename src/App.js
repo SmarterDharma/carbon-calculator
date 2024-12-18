@@ -221,7 +221,7 @@ function App() {
       case 'personal':
         return <PersonalInfo formData={formData.personal} updateFormData={updateFormData} />;
       case 'energy':
-        return <Energy formData={formData.energy} updateFormData={updateFormData} />;
+        return <Energy formData={formData.energy} updateFormData={updateFormData} pincode={formData.personal?.pincode} />;
       case 'commute':
         return <Commute formData={formData.commute} updateFormData={updateFormData} />;
       case 'travel':

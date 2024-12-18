@@ -1,6 +1,7 @@
 import React from 'react';
+import { calculateUnitsFromBill } from './utils';
 
-const Energy = ({ formData, updateFormData }) => {
+const Energy = ({ formData, updateFormData, pincode }) => {
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     let finalValue = value;
@@ -34,14 +35,9 @@ const Energy = ({ formData, updateFormData }) => {
     updateFormData('energy', { dontKnowUnits: !dontKnowUnits });
   };
 
-  const calculateUnitsFromBill = (bill) => {
+  const calculateUnitsDisplay = (bill) => {
     if (!bill) return '';
-    let units = 0;
-    if (bill <= 200) {
-      units = 125;
-    } else {
-      units = bill / 7.11;
-    }
+    const units = calculateUnitsFromBill(bill, pincode);
     return units.toFixed(2);
   };
 
@@ -93,7 +89,7 @@ const Energy = ({ formData, updateFormData }) => {
                 <p className="font-medium text-left">Estimated Units:</p>
                 <input
                   type="text"
-                  value={calculateUnitsFromBill(formData?.electricityBill)}
+                  value={calculateUnitsDisplay(formData?.electricityBill)}
                   readOnly
                   className="input-field bg-gray-50"
                 />
