@@ -76,20 +76,88 @@ function App() {
   };
 
   const validateCommute = () => {
-    const { selectedModes } = formData.commute || {};
-    if (!selectedModes || selectedModes.length === 0) {
-      alert('Please select at least one mode of commute');
+    const { 
+      walkCycleDistance,
+      publicTransportDistance,
+      twoWheelerDistance,
+      threeWheelerDistance,
+      fourWheelerDistance 
+    } = formData.commute || {};
+
+    // Check if any mode has a distance value greater than 0
+    const hasValidCommute = 
+      walkCycleDistance > 0 ||
+      publicTransportDistance > 0 ||
+      (twoWheelerDistance > 0 && formData.commute?.twoWheelerType) ||
+      (threeWheelerDistance > 0 && formData.commute?.threeWheelerType) ||
+      (fourWheelerDistance > 0 && formData.commute?.carType);
+
+    if (!hasValidCommute) {
+      alert('Please enter travel distance for at least one mode of commute');
       return false;
     }
     return true;
   };
 
   const validateTravel = () => {
-    // At least one travel section should be filled
-    const sections = ['showDomesticFlights', 'showInternationalFlights', 'showTrains', 'showGasolineCars', 'showElectricCars'];
-    const hasFilledSection = sections.some(section => formData.travel?.[section]);
-    if (!hasFilledSection) {
-      alert('Please fill in at least one travel section');
+    const {
+      // Domestic Flights
+      domesticVeryShortFlights,
+      domesticShortFlights,
+      domesticMediumFlights,
+      domesticLongFlights,
+      // International Flights
+      internationalShortFlights,
+      internationalMediumFlights,
+      internationalLongFlights,
+      internationalUltraLongFlights,
+      // Train Journeys
+      localTrainJourneys,
+      shortTrainJourneys,
+      mediumTrainJourneys,
+      longTrainJourneys,
+      // Gasoline Car Trips
+      localGasolineTrips,
+      shortGasolineTrips,
+      mediumGasolineTrips,
+      longGasolineTrips,
+      // Electric Car Trips
+      localElectricTrips,
+      shortElectricTrips,
+      mediumElectricTrips,
+      longElectricTrips
+    } = formData.travel || {};
+
+    // Check if any travel mode has trips greater than 0
+    const hasValidTravel = 
+      // Domestic Flights
+      domesticVeryShortFlights > 0 ||
+      domesticShortFlights > 0 ||
+      domesticMediumFlights > 0 ||
+      domesticLongFlights > 0 ||
+      // International Flights
+      internationalShortFlights > 0 ||
+      internationalMediumFlights > 0 ||
+      internationalLongFlights > 0 ||
+      internationalUltraLongFlights > 0 ||
+      // Train Journeys
+      localTrainJourneys > 0 ||
+      shortTrainJourneys > 0 ||
+      mediumTrainJourneys > 0 ||
+      longTrainJourneys > 0 ||
+      // Gasoline Car Trips
+      localGasolineTrips > 0 ||
+      shortGasolineTrips > 0 ||
+      mediumGasolineTrips > 0 ||
+      longGasolineTrips > 0 ||
+      // Electric Car Trips
+      localElectricTrips > 0 ||
+      shortElectricTrips > 0 ||
+      mediumElectricTrips > 0 ||
+      longElectricTrips > 0;
+
+    if (!hasValidTravel) {
+      alert('Please enter at least one trip in any travel section');
       return false;
     }
     return true;
@@ -167,14 +235,61 @@ function App() {
     }
   };
 
+  const handleNavigationClick = (bucket) => {
+    // Don't allow clicking on result section directly
+    if (bucket === 'result') return;
+    
+    // Get the current index and target index
+    const currentIndex = bucketOrder.indexOf(activeBucket);
+    const targetIndex = bucketOrder.indexOf(bucket);
+    
+    // Only allow going backwards or to already validated sections
+    if (targetIndex < currentIndex || isValidUpTo(targetIndex)) {
+      setActiveBucket(bucket);
+    }
+  };
+
+  // Helper function to check if all sections up to an index are valid
+  const isValidUpTo = (targetIndex) => {
+    for (let i = 0; i < targetIndex; i++) {
+      const bucket = bucketOrder[i];
+      switch (bucket) {
+        case 'personal':
+          if (!validatePersonalInfo()) return false;
+          break;
+        case 'energy':
+          if (!validateEnergy()) return false;
+          break;
+        case 'commute':
+          if (!validateCommute()) return false;
+          break;
+        case 'travel':
+          if (!validateTravel()) return false;
+          break;
+        case 'lifestyle':
+          if (!validateLifestyle()) return false;
+          break;
+        default:
+          break;
+      }
+    }
+    return true;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-center text-gray-800">Dharma Meter</h1>
+          <div className="flex items-center justify-center gap-3">
+            <img src="/logo-2.svg" alt="Dharma Meter Logo" className="h-8" />
+            <h1 className="text-2xl font-bold text-gray-800">Dharma Meter</h1>
+          </div>
         </div>
       </header>
-      <Navigation activeBucket={activeBucket} />
+      <Navigation 
+        activeBucket={activeBucket} 
+        onNavigationClick={handleNavigationClick}
+      />
       <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         {renderActiveBucket()}
         {activeBucket !== 'result' && renderNavigationButtons()}

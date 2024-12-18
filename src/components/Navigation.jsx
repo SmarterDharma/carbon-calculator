@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Navigation = ({ activeBucket }) => {
+const Navigation = ({ activeBucket, onNavigationClick }) => {
   const navItems = [
     { id: 'personal', label: 'Personal Info' },
     { id: 'energy', label: 'Energy' },
@@ -30,7 +30,11 @@ const Navigation = ({ activeBucket }) => {
             {navItems.map((item, index) => (
               <div 
                 key={item.id}
-                className="flex flex-col items-center"
+                className={`
+                  flex flex-col items-center
+                  ${index <= currentIndex ? 'cursor-pointer' : 'cursor-not-allowed'}
+                `}
+                onClick={() => onNavigationClick(item.id)}
               >
                 <div className={`
                   w-6 h-6 rounded-full border-2 flex items-center justify-center
