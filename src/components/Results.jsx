@@ -13,8 +13,6 @@ import {
   MEAL_FACTORS,
   WASTE_FACTORS,
   FASHION_FACTORS,
-  CHART_COLORS,
-  ELECTRICITY_RATES
 } from '../constants';
 import { calculateUnitsFromBill } from './utils';
 
@@ -45,12 +43,11 @@ const Results = ({ formData, resetCalculator }) => {
     const travelFootprint = calculateTravelFootprint(formData.travel);
     const lifestyleFootprint = calculateLifestyleFootprint(formData.lifestyle);
 
-    const totalFootprint = (
+    const totalFootprint = 
       energyFootprint +
       commuteFootprint +
       travelFootprint +
-      lifestyleFootprint
-    ) / 1000; // Convert to tons
+      lifestyleFootprint;
 
     const result = {
       energy: energyFootprint,
@@ -86,6 +83,23 @@ const Results = ({ formData, resetCalculator }) => {
   }, [formData]);
 
   // Chart configurations
+  const chartColors = {
+    backgroundColor: [
+      'rgba(243, 138, 138, 0.8)',  // Remaining emissions: #F38A8A
+      'rgba(6, 77, 113, 0.8)',     // Energy: #064D71
+      'rgba(104, 151, 208, 0.8)',  // Commute: #6897D0
+      'rgba(46, 140, 143, 0.8)',   // Travel: #2E8C8F
+      'rgba(47, 95, 152, 0.8)',    // Lifestyle: #2F5F98
+    ],
+    borderColor: [
+      'rgb(243, 138, 138)',  // Remaining emissions: #F38A8A
+      'rgb(6, 77, 113)',     // Energy: #064D71
+      'rgb(104, 151, 208)',  // Commute: #6897D0
+      'rgb(46, 140, 143)',   // Travel: #2E8C8F
+      'rgb(47, 95, 152)',    // Lifestyle: #2F5F98
+    ]
+  };
+
   const pieChartData = {
     labels: ['Energy', 'Commute', 'Travel', 'Lifestyle'],
     datasets: [{
@@ -94,43 +108,37 @@ const Results = ({ formData, resetCalculator }) => {
         currentResult?.commute || 0,
         currentResult?.travel || 0,
         currentResult?.lifestyle || 0
+      ].map(value => ((value / (currentResult?.total || 1)) * 100).toFixed(1)),
+      backgroundColor: [
+        chartColors.backgroundColor[1],  // Energy
+        chartColors.backgroundColor[2],  // Commute
+        chartColors.backgroundColor[3],  // Travel
+        chartColors.backgroundColor[4],  // Lifestyle
       ],
-      backgroundColor: CHART_COLORS.backgroundColor.slice(0, 4),
-      borderColor: CHART_COLORS.borderColor.slice(0, 4),
+      borderColor: [
+        chartColors.borderColor[1],  // Energy
+        chartColors.borderColor[2],  // Commute
+        chartColors.borderColor[3],  // Travel
+        chartColors.borderColor[4],  // Lifestyle
+      ],
       borderWidth: 1
     }]
   };
 
   const barChartData = {
-    labels: ['Global Average', 'Indian Average', 'Your Footprint'],
+    labels: ['Your Footprint', 'Indian Average', 'Global Average'],
     datasets: [{
-      label: 'Carbon Footprint (Ton CO₂e)',
-      data: [3.9, 1.6, currentResult?.total || 0],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.8)',
-        'rgba(54, 162, 235, 0.8)',
-        'rgba(75, 192, 192, 0.8)'
-      ]
+      label: 'Your Footprint (Kg CO₂e)',
+      data: [
+        currentResult?.total || 0,
+        1600,
+        3900
+      ],
+      backgroundColor: chartColors.backgroundColor.slice(1, 4).reverse(),
+      borderColor: chartColors.borderColor.slice(1, 4).reverse(),
+      borderWidth: 1,
+      borderRadius: 4,
     }]
-  };
-
-  const barChartOptions = {
-    responsive: true,
-    plugins: {
-      title: {
-        display: true,
-        text: 'Carbon Footprint Comparison'
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Ton CO₂e'
-        }
-      }
-    }
   };
 
   const generateRecommendations = () => {
@@ -193,77 +201,124 @@ const Results = ({ formData, resetCalculator }) => {
     if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
       const meatMeals = (formData.lifestyle?.chickenFishMeals || 0) + 
                        (formData.lifestyle?.redMeatMeals || 0);
-      const potentialSaving = (meatMeals * 52 * 0.5) / 1000; // 0.5 kg CO2e saved per meal
+      const potentialSaving = meatMeals * 52 * 0.5; // Removed /1000
 
       recommendations.push({
         title: 'Dietary Changes',
-        description: `Reducing meat consumption by half and replacing with plant-based meals could save approximately ${potentialSaving.toFixed(2)} tons of CO₂e annually.`
+        description: `Reducing meat consumption by half and replacing with plant-based meals could save approximately ${Math.round(potentialSaving)} Kg of CO₂e annually.`
       });
     }
 
     // Composting Recommendations
     if (formData.lifestyle?.compostOption === 'no') {
-      const annualWaste = 0.2 * 365; // 0.2 kg per day
-      const currentEmissions = annualWaste * 1.29; // landfill factor
-      const compostEmissions = annualWaste * 0.32; // composting factor
-      const carbonSaved = (currentEmissions - compostEmissions) / 1000;
+      const annualWaste = 0.2 * 365;
+      const currentEmissions = annualWaste * 1.29;
+      const compostEmissions = annualWaste * 0.32;
+      const carbonSaved = currentEmissions - compostEmissions; // Removed /1000
 
       recommendations.push({
         title: 'Waste Management',
-        description: `Starting composting could reduce your waste emissions by approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually.`
+        description: `Starting composting could reduce your waste emissions by approximately ${Math.round(carbonSaved)} Kg of CO₂e annually.`
       });
     }
 
     return recommendations;
   };
 
-  const calculateSavingsSummary = () => {
-    const savings = {
-      solarPV: 0,
-      solarWater: 0,
-      commute: 0,
-      diet: 0,
-      composting: 0
-    };
-
-    // Solar PV Savings
+  // Savings calculation functions
+  const calculateSolarPVSavings = () => {
     if (!formData.energy?.solarPV) {
       const monthlyUnits = formData.energy?.electricityUnits || 
         (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
-      savings.solarPV = (monthlyUnits * 12 * 0.716) / 1000;
+      return monthlyUnits * 12 * 0.716;
     }
+    return 0;
+  };
 
-    // Solar Water Heater Savings
+  const calculateSolarWaterSavings = () => {
     if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
       const geysers = formData.energy.geysers;
       const annualElectricitySaved = geysers * 2 * 365;
-      savings.solarWater = (annualElectricitySaved * 0.716) / 1000;
+      return annualElectricitySaved * 0.716;
     }
+    return 0;
+  };
 
-    // Commute Savings
+  const calculatePublicTransportSavings = () => {
     if (formData.commute?.carType === 'suv') {
       const distance = formData.commute?.fourWheelerDistance || 0;
       const annualEmissions = distance * 0.2 * 260;
       const publicTransportEmissions = distance * 0.04 * 260;
-      savings.commute = (annualEmissions - publicTransportEmissions) / 1000;
+      return annualEmissions - publicTransportEmissions;
     }
+    return 0;
+  };
 
-    // Diet Savings
+  const calculateElectricVehicleSavings = () => {
+    if (formData.commute?.carType === 'petrol' || formData.commute?.carType === 'diesel') {
+      const distance = formData.commute?.fourWheelerDistance || 0;
+      const currentEmissions = distance * (formData.commute?.carType === 'suv' ? 0.2 : 0.14) * 260;
+      const evEmissions = distance * 0.09 * 260;
+      return currentEmissions - evEmissions;
+    }
+    return 0;
+  };
+
+  const calculateVirtualMeetingsSavings = () => {
+    const totalFlights = (formData.travel?.domesticShortFlights || 0) + 
+                        (formData.travel?.domesticLongFlights || 0);
+    if (totalFlights > 6) {
+      const reducibleFlights = Math.floor(totalFlights * 0.2);
+      const averageEmissionsPerFlight = 130;
+      return reducibleFlights * averageEmissionsPerFlight;
+    }
+    return 0;
+  };
+
+  const calculateDietSavings = () => {
     if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
       const meatMeals = (formData.lifestyle?.chickenFishMeals || 0) + 
                        (formData.lifestyle?.redMeatMeals || 0);
-      savings.diet = (meatMeals * 52 * 0.5) / 1000;
+      return meatMeals * 52 * 0.5;
     }
+    return 0;
+  };
 
-    // Composting Savings
+  const calculateCompostingSavings = () => {
     if (formData.lifestyle?.compostOption === 'no') {
       const annualWaste = 0.2 * 365;
       const currentEmissions = annualWaste * 1.29;
       const compostEmissions = annualWaste * 0.32;
-      savings.composting = (currentEmissions - compostEmissions) / 1000;
+      return currentEmissions - compostEmissions;
     }
+    return 0;
+  };
 
-    return savings;
+  const calculateSavingsSummary = () => {
+    const summary = {
+      energy: {
+        solarPV: calculateSolarPVSavings(),
+        solarWater: calculateSolarWaterSavings(),
+      },
+      commute: {
+        publicTransport: calculatePublicTransportSavings(),
+        electricVehicle: calculateElectricVehicleSavings(),
+      },
+      travel: {
+        virtualMeetings: calculateVirtualMeetingsSavings(),
+      },
+      lifestyle: {
+        diet: calculateDietSavings(),
+        composting: calculateCompostingSavings(),
+      }
+    };
+
+    return {
+      energy: Object.values(summary.energy).reduce((a, b) => a + b, 0),
+      commute: Object.values(summary.commute).reduce((a, b) => a + b, 0),
+      travel: Object.values(summary.travel).reduce((a, b) => a + b, 0),
+      lifestyle: Object.values(summary.lifestyle).reduce((a, b) => a + b, 0)
+    };
   };
 
   const savingsSummary = calculateSavingsSummary();
@@ -273,106 +328,201 @@ const Results = ({ formData, resetCalculator }) => {
   const savingsChartData = {
     labels: [
       'Remaining Emissions',
-      'Solar PV Savings',
-      'Solar Water Heater Savings',
+      'Energy Savings',
       'Commute Savings',
-      'Diet Changes Savings',
-      'Composting Savings'
+      'Travel Savings',
+      'Lifestyle Savings'
     ],
     datasets: [{
       data: [
         Math.max(0, remainingEmissions),
-        savingsSummary.solarPV,
-        savingsSummary.solarWater,
+        savingsSummary.energy,
         savingsSummary.commute,
-        savingsSummary.diet,
-        savingsSummary.composting
-      ],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.8)',  // Red for remaining emissions
-        'rgba(75, 192, 192, 0.8)',  // Green for savings
-        'rgba(54, 162, 235, 0.8)',
-        'rgba(255, 206, 86, 0.8)',
-        'rgba(153, 102, 255, 0.8)',
-        'rgba(255, 159, 64, 0.8)'
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(75, 192, 192, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(153, 102, 255, 1)',
-        'rgba(255, 159, 64, 1)'
-      ],
+        savingsSummary.travel,
+        savingsSummary.lifestyle
+      ].map(value => ((value / (currentResult?.total || 1)) * 100).toFixed(1)),
+      backgroundColor: chartColors.backgroundColor,
+      borderColor: chartColors.borderColor,
       borderWidth: 1
     }]
   };
 
+  // Add this calculation function
+  const calculateRequiredTrees = (totalEmissions) => {
+    return Math.ceil((totalEmissions / 1000) * 7);
+  };
+
+  // Chart options configurations
+  const pieChartOptions = {
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: {
+          filter: function(legendItem, data) {
+            return data.datasets[0].data[legendItem.index] > 0;
+          },
+          generateLabels: function(chart) {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label, i) => ({
+                text: `${label}: ${data.datasets[0].data[i]}%`,
+                fillStyle: data.datasets[0].backgroundColor[i],
+                strokeStyle: data.datasets[0].borderColor[i],
+                lineWidth: 1,
+                hidden: data.datasets[0].data[i] <= 0,
+                index: i
+              }));
+            }
+            return [];
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.label}: ${context.raw}%`;
+          }
+        }
+      }
+    }
+  };
+
+  const barChartOptions = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      title: {
+        display: false
+      },
+      tooltip: {
+        enabled: false
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: {
+          display: false,
+          text: 'Carbon Footprint (Kg CO₂e)'
+        },
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        grid: {
+          display: false
+        }
+      }
+    },
+    plugins: [{
+      id: 'barLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+          const meta = chart.getDatasetMeta(datasetIndex);
+          meta.data.forEach((bar, index) => {
+            const data = dataset.data[index];
+            ctx.fillStyle = 'black';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(data, bar.x + 5, bar.y);
+          });
+        });
+      }
+    }]
+  };
+
+  const savingsChartOptions = {
+    plugins: {
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: {
+          filter: function(legendItem, data) {
+            return data.datasets[0].data[legendItem.index] > 0;
+          },
+          generateLabels: function(chart) {
+            const data = chart.data;
+            if (data.labels.length && data.datasets.length) {
+              return data.labels.map((label, i) => ({
+                text: `${label}: ${data.datasets[0].data[i]}%`,
+                fillStyle: data.datasets[0].backgroundColor[i],
+                strokeStyle: data.datasets[0].borderColor[i],
+                lineWidth: 1,
+                hidden: data.datasets[0].data[i] <= 0,
+                index: i
+              }));
+            }
+            return [];
+          }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return `${context.label}: ${context.raw}%`;
+          }
+        }
+      }
+    }
+  };
+
+  // Add this function to calculate percentage differences
+  const calculatePercentageDifferences = () => {
+    const yourFootprint = currentResult?.total || 0;
+    const indianAvg = 1600;
+    const globalAvg = 3900;
+
+    return {
+      indian: ((yourFootprint - indianAvg) / indianAvg * 100).toFixed(1),
+      global: ((yourFootprint - globalAvg) / globalAvg * 100).toFixed(1)
+    };
+  };
+
   return (
     <div className="section-container max-w-4xl mx-auto">
+      {/* Header with retake button */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Results</h2>
+        <div>
+          <p className="text-lg text-gray-600 mt-2">
+            Hey {formData.personal?.name || 'there'}! here's your carbon footprint
+          </p>
+        </div>
         <button
           onClick={handleRetake}
           className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
         >
-          Retake Calculator
+          Retake
         </button>
       </div>
 
-      {/* User Info */}
-      <div className="mb-8 text-left">
-        <h3 className="text-xl font-semibold mb-4">User Information</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <p><span className="font-medium">Name:</span> {formData.personal?.name}</p>
-          <p><span className="font-medium">Email:</span> {formData.personal?.email}</p>
-          <p><span className="font-medium">Age:</span> {formData.personal?.age}</p>
-          <p><span className="font-medium">Household Size:</span> {formData.personal?.household}</p>
-        </div>
-      </div>
-
       {/* Total Footprint */}
-      <div className="text-center mb-8">
-        <h3 className="text-3xl font-bold text-green-600">
-          {currentResult?.total.toFixed(2)}
-        </h3>
-        <p className="text-gray-600">Annual Carbon Footprint in Ton CO₂e</p>
-      </div>
-
-      {/* Individual Footprints */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="flex justify-between">
-            <span>Energy:</span>
-            <span className="font-bold text-green-600">
-              {currentResult?.energy.toFixed(2) || 0} Kg CO₂e
-            </span>
-          </p>
+      <div className="text-center mb-8 bg-white p-6 rounded-lg shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="border-r border-gray-200">
+            <h3 className="text-4xl font-bold text-green-600 flex items-baseline justify-center">
+              {Math.round(currentResult?.total)}
+              <span className="text-2xl text-gray-500 ml-2">Kg CO₂e</span>
+            </h3>
+            <p className="text-xl text-gray-600 mt-2">Annual Carbon Footprint</p>
+          </div>
+          <div>
+            <h3 className="text-4xl font-bold text-green-600 flex items-baseline justify-center">
+              {calculateRequiredTrees(currentResult?.total || 0)}
+              <span className="text-2xl text-gray-500 ml-2">Trees</span>
+            </h3>
+            <p className="text-xl text-gray-600 mt-2">Required to Offset</p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="flex justify-between">
-            <span>Daily Commute:</span>
-            <span className="font-bold text-green-600">
-              {currentResult?.commute.toFixed(2) || 0} Kg CO₂e
-            </span>
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="flex justify-between">
-            <span>Travel:</span>
-            <span className="font-bold text-green-600">
-              {currentResult?.travel.toFixed(2) || 0} Kg CO₂e
-            </span>
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <p className="flex justify-between">
-            <span>Lifestyle Choices:</span>
-            <span className="font-bold text-green-600">
-              {currentResult?.lifestyle.toFixed(2) || 0} Kg CO₂e
-            </span>
-          </p>
-        </div>
+        <p className="text-sm text-gray-500 mt-4">
+          Trees take about 10 years to offset this amount of carbon
+        </p>
       </div>
 
       {/* Charts */}
@@ -380,18 +530,45 @@ const Results = ({ formData, resetCalculator }) => {
         <div className="card-responsive">
           <h3 className="text-lg font-semibold mb-4">Footprint Breakdown</h3>
           <div className="aspect-square">
-            <Pie data={pieChartData} options={{ maintainAspectRatio: true }} />
+            <Pie data={pieChartData} options={{ ...pieChartOptions, maintainAspectRatio: true }} />
           </div>
         </div>
         <div className="card-responsive">
           <h3 className="text-lg font-semibold mb-4">Comparison</h3>
-          <div className="aspect-square">
-            <Bar data={barChartData} options={{ ...barChartOptions, maintainAspectRatio: true }} />
+          <div style={{ height: '200px' }}>
+            <Bar data={barChartData} options={barChartOptions} />
+          </div>
+          <div className="mt-4 space-y-3 text-base">
+            {(() => {
+              const diff = calculatePercentageDifferences();
+              return (
+                <>
+                  <p className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+                    <span className={`text-xl font-bold ${diff.indian > 0 ? "text-red-500" : "text-green-500"}`}>
+                      {diff.indian > 0 ? "↑" : "↓"}
+                    </span>
+                    <span className="font-medium">
+                      <span className="text-lg">{Math.abs(diff.indian)}%</span>
+                      <span className="text-gray-600"> {diff.indian > 0 ? "higher" : "lower"} than Indian average</span>
+                    </span>
+                  </p>
+                  <p className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+                    <span className={`text-xl font-bold ${diff.global > 0 ? "text-red-500" : "text-green-500"}`}>
+                      {diff.global > 0 ? "↑" : "↓"}
+                    </span>
+                    <span className="font-medium">
+                      <span className="text-lg">{Math.abs(diff.global)}%</span>
+                      <span className="text-gray-600"> {diff.global > 0 ? "higher" : "lower"} than global average</span>
+                    </span>
+                  </p>
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>
 
-      {/* Updated Recommendations Section */}
+      {/* Recommendations Section */}
       <div className="mt-8 text-left">
         <h3 className="text-xl font-semibold mb-4">Personalized Recommendations</h3>
         <div className="space-y-6">
@@ -410,20 +587,71 @@ const Results = ({ formData, resetCalculator }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="card-responsive">
             <div className="aspect-square">
-              <Pie data={savingsChartData} options={{ maintainAspectRatio: true }} />
+              <Pie data={savingsChartData} options={{ ...savingsChartOptions, maintainAspectRatio: true }} />
             </div>
           </div>
           <div className="space-y-4">
             <div className="bg-white p-4 rounded-lg shadow">
               <h4 className="font-medium text-green-600 mb-2">Total Potential Savings</h4>
-              <p className="text-2xl font-bold">{totalPotentialSavings.toFixed(2)} Tons CO₂e</p>
+              <p className="text-2xl font-bold flex items-baseline">
+                <span>{Math.round(totalPotentialSavings)}</span>
+                <span className="text-gray-500 text-xl ml-2">Kg CO₂e</span>
+              </p>
               <p className="text-sm text-gray-600 mt-1">
                 {((totalPotentialSavings / currentResult?.total) * 100).toFixed(1)}% reduction from current emissions
               </p>
             </div>
             <div className="bg-white p-4 rounded-lg shadow">
               <h4 className="font-medium text-red-600 mb-2">Remaining Emissions After Changes</h4>
-              <p className="text-2xl font-bold">{remainingEmissions.toFixed(2)} Tons CO₂e</p>
+              <p className="text-2xl font-bold flex items-baseline">
+                <span>{Math.round(remainingEmissions)}</span>
+                <span className="text-gray-500 text-xl ml-2">Kg CO₂e</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pledge Section */}
+      <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
+        <h3 className="text-2xl font-bold text-green-600 mb-4">Take the Pledge!</h3>
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Your commitment to reducing carbon emissions is commendable. Take it a step further by pledging to:
+          </p>
+          <ul className="list-disc list-inside space-y-2 text-gray-700 ml-4">
+            <li>Implement the recommended interventions to reduce your carbon footprint</li>
+            <li>Offset your remaining emissions by planting {calculateRequiredTrees(currentResult?.total || 0)} trees</li>
+            <li>Track your progress and maintain sustainable practices</li>
+          </ul>
+          
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <p className="text-gray-700">
+              <span className="font-semibold">Forest First Samithi</span> is our trusted offset partner. 
+              We highly recommend approaching them to help offset your carbon footprint through tree plantation.
+            </p>
+            <div className="mt-4">
+              <a 
+                href="https://forestfirstsamithi.org/contribute/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Offset with Forest First Samithi
+                <svg 
+                  className="ml-2 w-4 h-4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
+                  />
+                </svg>
+              </a>
             </div>
           </div>
         </div>

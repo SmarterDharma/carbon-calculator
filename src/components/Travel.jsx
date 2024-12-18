@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
 
+const CheckIcon = () => (
+  <svg 
+    className="h-5 w-5 text-green-500" 
+    viewBox="0 0 20 20" 
+    fill="currentColor"
+  >
+    <path 
+      fillRule="evenodd" 
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
+      clipRule="evenodd" 
+    />
+  </svg>
+);
+
 const Travel = ({ formData, updateFormData }) => {
   const [openSection, setOpenSection] = useState(null);
 
@@ -14,6 +28,38 @@ const Travel = ({ formData, updateFormData }) => {
       setOpenSection(null);
     } else {
       setOpenSection(section);
+    }
+  };
+
+  const isAccordionFilled = (section) => {
+    switch(section) {
+      case 'DomesticFlights':
+        return formData?.domesticVeryShortFlights > 0 || 
+               formData?.domesticShortFlights > 0 || 
+               formData?.domesticMediumFlights > 0 || 
+               formData?.domesticLongFlights > 0;
+      case 'InternationalFlights':
+        return formData?.internationalShortFlights > 0 || 
+               formData?.internationalMediumFlights > 0 || 
+               formData?.internationalLongFlights > 0 || 
+               formData?.internationalUltraLongFlights > 0;
+      case 'Trains':
+        return formData?.localTrainJourneys > 0 || 
+               formData?.shortTrainJourneys > 0 || 
+               formData?.mediumTrainJourneys > 0 || 
+               formData?.longTrainJourneys > 0;
+      case 'GasolineCars':
+        return formData?.localGasolineTrips > 0 || 
+               formData?.shortGasolineTrips > 0 || 
+               formData?.mediumGasolineTrips > 0 || 
+               formData?.longGasolineTrips > 0;
+      case 'ElectricCars':
+        return formData?.localElectricTrips > 0 || 
+               formData?.shortElectricTrips > 0 || 
+               formData?.mediumElectricTrips > 0 || 
+               formData?.longElectricTrips > 0;
+      default:
+        return false;
     }
   };
 
@@ -49,9 +95,14 @@ const Travel = ({ formData, updateFormData }) => {
         onClick={() => toggleAccordion(section)}
         className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
       >
-        <h3 className="text-xl font-semibold text-left flex items-center gap-2">
-          {emoji} {title}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-xl font-semibold text-left flex items-center gap-2">
+            {emoji} {title}
+          </h3>
+          {isAccordionFilled(section) && (
+            <CheckIcon />
+          )}
+        </div>
         <svg
           className={`w-6 h-6 transform transition-transform ${
             openSection === section ? 'rotate-180' : ''

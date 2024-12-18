@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
 
+const CheckIcon = () => (
+  <svg 
+    className="h-5 w-5 text-green-500" 
+    viewBox="0 0 20 20" 
+    fill="currentColor"
+  >
+    <path 
+      fillRule="evenodd" 
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" 
+      clipRule="evenodd" 
+    />
+  </svg>
+);
+
 const Commute = ({ formData, updateFormData }) => {
   const [openSection, setOpenSection] = useState(null);
 
@@ -16,15 +30,37 @@ const Commute = ({ formData, updateFormData }) => {
     }
   };
 
+  const isAccordionFilled = (modeId) => {
+    switch(modeId) {
+      case 'walk-cycle':
+        return formData?.walkCycleDistance > 0;
+      case 'public-transport':
+        return formData?.publicTransportDistance > 0;
+      case 'two-wheeler':
+        return formData?.twoWheelerType && formData?.twoWheelerDistance > 0;
+      case 'three-wheeler':
+        return formData?.threeWheelerType && formData?.threeWheelerDistance > 0;
+      case 'four-wheeler':
+        return formData?.carType && formData?.fourWheelerDistance > 0;
+      default:
+        return false;
+    }
+  };
+
   const renderSection = (mode, content) => (
     <div className="border rounded-lg overflow-hidden mb-4">
       <button
         onClick={() => toggleCommuteOption(mode.id)}
         className="w-full px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors"
       >
-        <h3 className="text-lg font-semibold text-left flex items-center gap-2">
-          {mode.label}
-        </h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-left flex items-center gap-2">
+            {mode.label}
+          </h3>
+          {isAccordionFilled(mode.id) && (
+            <CheckIcon />
+          )}
+        </div>
         <svg
           className={`w-6 h-6 transform transition-transform ${
             openSection === mode.id ? 'rotate-180' : ''
