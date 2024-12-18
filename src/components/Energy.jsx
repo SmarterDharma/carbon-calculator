@@ -1,33 +1,18 @@
 import React from 'react';
-import { calculateUnitsFromBill } from './utils';
+import { calculateUnitsFromBill, handleNonNegativeInput } from './utils';
 
 const Energy = ({ formData, updateFormData, pincode }) => {
   const handleInputChange = (e) => {
-    const { name, value, type } = e.target;
-    let finalValue = value;
+    const { name, type } = e.target;
+    let value;
 
-    // Handle number input validation and constraints
     if (type === 'number') {
-      const numValue = Number(value);
-      switch(name) {
-        case 'lpgCylinders':
-          finalValue = Math.min(Math.max(0, numValue), 24);
-          break;
-        case 'geysers':
-          finalValue = Math.min(Math.max(0, numValue), 5);
-          break;
-        case 'solarPVCapacity':
-          finalValue = Math.min(Math.max(0, numValue), 50);
-          break;
-        case 'solarWaterCapacity':
-          finalValue = Math.min(Math.max(0, numValue), 500);
-          break;
-        default:
-          finalValue = numValue;
-      }
+      value = handleNonNegativeInput(e);
+    } else {
+      value = e.target.value;
     }
-    
-    updateFormData('energy', { [name]: finalValue });
+
+    updateFormData('energy', { [name]: value });
   };
 
   const toggleBillInput = () => {

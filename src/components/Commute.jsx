@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { handleNonNegativeInput } from './utils';
 
 const CheckIcon = () => (
   <svg 
@@ -18,7 +19,15 @@ const Commute = ({ formData, updateFormData }) => {
   const [openSection, setOpenSection] = useState(null);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, type } = e.target;
+    let value;
+
+    if (type === 'number') {
+      value = handleNonNegativeInput(e);
+    } else {
+      value = e.target.value;
+    }
+
     updateFormData('commute', { [name]: value });
   };
 

@@ -5,16 +5,15 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 import { Pie, Bar } from 'react-chartjs-2';
 import { saveResult, getAllResults } from '../utils/storage';
 import {
-  ENERGY_FACTORS,
-  COMMUTE_FACTORS,
-  FLIGHT_FACTORS,
-  TRAIN_FACTORS,
-  CAR_FACTORS,
-  MEAL_FACTORS,
-  WASTE_FACTORS,
-  FASHION_FACTORS,
-} from '../constants';
-import { calculateUnitsFromBill } from './utils';
+  calculateEnergyFootprint,
+  calculateCommuteFootprint,
+  calculateTravelFootprint,
+  calculateLifestyleFootprint,
+  calculateSavingsSummary,
+  calculateRequiredTrees,
+  calculatePercentageDifferences,
+  generateRecommendations
+} from './utils';
 
 // Register ChartJS components
 ChartJS.register(
@@ -49,7 +48,7 @@ const Results = ({ formData, resetCalculator }) => {
       travelFootprint +
       lifestyleFootprint;
 
-    const result = {
+    return {
       energy: energyFootprint,
       commute: commuteFootprint,
       travel: travelFootprint,
@@ -67,8 +66,6 @@ const Results = ({ formData, resetCalculator }) => {
         lifestyle: formData.lifestyle
       }
     };
-
-    return result;
   };
 
   useEffect(() => {
@@ -141,187 +138,7 @@ const Results = ({ formData, resetCalculator }) => {
     }]
   };
 
-  const generateRecommendations = () => {
-    const recommendations = [];
-
-    // Solar PV Recommendations
-    if (!formData.energy?.solarPV) {
-      const monthlyUnits = formData.energy?.electricityUnits || 
-        (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
-      const requiredKWP = (monthlyUnits * 12) / (365 * 4.5); // 4.5 units per day per KWp
-      const roundedKWP = Math.ceil(requiredKWP);
-      const carbonSaved = (monthlyUnits * 12 * 0.716) / 1000; // tons of CO2
-
-      if (roundedKWP > 0) {
-        recommendations.push({
-          title: 'Solar Power Installation',
-          description: `Installing a ${roundedKWP} kWp solar system could offset your entire electricity consumption and save approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually.`
-        });
-      }
-    }
-
-    // Solar Water Heater Recommendations
-    if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
-      const geysers = formData.energy.geysers;
-      const requiredCapacity = geysers * 100; // 100L per geyser
-      const annualElectricitySaved = geysers * 2 * 365; // 2 kWh per geyser per day
-      const carbonSaved = (annualElectricitySaved * 0.716) / 1000; // tons of CO2
-
-      recommendations.push({
-        title: 'Solar Water Heating',
-        description: `Installing a ${requiredCapacity}L solar water heater system could replace your ${geysers} geyser${geysers > 1 ? 's' : ''} and save approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually.`
-      });
-    }
-
-    // Commute Recommendations
-    if (formData.commute?.carType === 'suv') {
-      const distance = formData.commute?.fourWheelerDistance || 0;
-      const annualEmissions = distance * 0.2 * 260; // 0.2 kg/km for SUV, 260 working days
-      const publicTransportEmissions = distance * 0.04 * 260; // 0.04 kg/km for public transport
-      const carbonSaved = (annualEmissions - publicTransportEmissions) / 1000;
-
-      recommendations.push({
-        title: 'Commute Alternatives',
-        description: `Switching from SUV to public transport for your ${distance}km daily commute could save approximately ${carbonSaved.toFixed(2)} tons of CO₂e annually. Consider carpooling or public transportation.`
-      });
-    }
-
-    // Travel Recommendations
-    const totalFlights = (formData.travel?.domesticShortFlights || 0) + 
-                        (formData.travel?.domesticLongFlights || 0) +
-                        (formData.travel?.internationalFlights || 0);
-    if (totalFlights > 6) {
-      recommendations.push({
-        title: 'Air Travel',
-        description: 'Consider reducing air travel and opt for virtual meetings when possible. For domestic travel, consider train journeys which have significantly lower emissions.'
-      });
-    }
-
-    // Diet Recommendations
-    if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
-      const meatMeals = (formData.lifestyle?.chickenFishMeals || 0) + 
-                       (formData.lifestyle?.redMeatMeals || 0);
-      const potentialSaving = meatMeals * 52 * 0.5; // Removed /1000
-
-      recommendations.push({
-        title: 'Dietary Changes',
-        description: `Reducing meat consumption by half and replacing with plant-based meals could save approximately ${Math.round(potentialSaving)} Kg of CO₂e annually.`
-      });
-    }
-
-    // Composting Recommendations
-    if (formData.lifestyle?.compostOption === 'no') {
-      const annualWaste = 0.2 * 365;
-      const currentEmissions = annualWaste * 1.29;
-      const compostEmissions = annualWaste * 0.32;
-      const carbonSaved = currentEmissions - compostEmissions; // Removed /1000
-
-      recommendations.push({
-        title: 'Waste Management',
-        description: `Starting composting could reduce your waste emissions by approximately ${Math.round(carbonSaved)} Kg of CO₂e annually.`
-      });
-    }
-
-    return recommendations;
-  };
-
-  // Savings calculation functions
-  const calculateSolarPVSavings = () => {
-    if (!formData.energy?.solarPV) {
-      const monthlyUnits = formData.energy?.electricityUnits || 
-        (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
-      return monthlyUnits * 12 * 0.716;
-    }
-    return 0;
-  };
-
-  const calculateSolarWaterSavings = () => {
-    if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
-      const geysers = formData.energy.geysers;
-      const annualElectricitySaved = geysers * 2 * 365;
-      return annualElectricitySaved * 0.716;
-    }
-    return 0;
-  };
-
-  const calculatePublicTransportSavings = () => {
-    if (formData.commute?.carType === 'suv') {
-      const distance = formData.commute?.fourWheelerDistance || 0;
-      const annualEmissions = distance * 0.2 * 260;
-      const publicTransportEmissions = distance * 0.04 * 260;
-      return annualEmissions - publicTransportEmissions;
-    }
-    return 0;
-  };
-
-  const calculateElectricVehicleSavings = () => {
-    if (formData.commute?.carType === 'petrol' || formData.commute?.carType === 'diesel') {
-      const distance = formData.commute?.fourWheelerDistance || 0;
-      const currentEmissions = distance * (formData.commute?.carType === 'suv' ? 0.2 : 0.14) * 260;
-      const evEmissions = distance * 0.09 * 260;
-      return currentEmissions - evEmissions;
-    }
-    return 0;
-  };
-
-  const calculateVirtualMeetingsSavings = () => {
-    const totalFlights = (formData.travel?.domesticShortFlights || 0) + 
-                        (formData.travel?.domesticLongFlights || 0);
-    if (totalFlights > 6) {
-      const reducibleFlights = Math.floor(totalFlights * 0.2);
-      const averageEmissionsPerFlight = 130;
-      return reducibleFlights * averageEmissionsPerFlight;
-    }
-    return 0;
-  };
-
-  const calculateDietSavings = () => {
-    if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
-      const meatMeals = (formData.lifestyle?.chickenFishMeals || 0) + 
-                       (formData.lifestyle?.redMeatMeals || 0);
-      return meatMeals * 52 * 0.5;
-    }
-    return 0;
-  };
-
-  const calculateCompostingSavings = () => {
-    if (formData.lifestyle?.compostOption === 'no') {
-      const annualWaste = 0.2 * 365;
-      const currentEmissions = annualWaste * 1.29;
-      const compostEmissions = annualWaste * 0.32;
-      return currentEmissions - compostEmissions;
-    }
-    return 0;
-  };
-
-  const calculateSavingsSummary = () => {
-    const summary = {
-      energy: {
-        solarPV: calculateSolarPVSavings(),
-        solarWater: calculateSolarWaterSavings(),
-      },
-      commute: {
-        publicTransport: calculatePublicTransportSavings(),
-        electricVehicle: calculateElectricVehicleSavings(),
-      },
-      travel: {
-        virtualMeetings: calculateVirtualMeetingsSavings(),
-      },
-      lifestyle: {
-        diet: calculateDietSavings(),
-        composting: calculateCompostingSavings(),
-      }
-    };
-
-    return {
-      energy: Object.values(summary.energy).reduce((a, b) => a + b, 0),
-      commute: Object.values(summary.commute).reduce((a, b) => a + b, 0),
-      travel: Object.values(summary.travel).reduce((a, b) => a + b, 0),
-      lifestyle: Object.values(summary.lifestyle).reduce((a, b) => a + b, 0)
-    };
-  };
-
-  const savingsSummary = calculateSavingsSummary();
+  const savingsSummary = calculateSavingsSummary(formData, currentResult);
   const totalPotentialSavings = Object.values(savingsSummary).reduce((a, b) => a + b, 0);
   const remainingEmissions = currentResult?.total - totalPotentialSavings;
 
@@ -345,11 +162,6 @@ const Results = ({ formData, resetCalculator }) => {
       borderColor: chartColors.borderColor,
       borderWidth: 1
     }]
-  };
-
-  // Add this calculation function
-  const calculateRequiredTrees = (totalEmissions) => {
-    return Math.ceil((totalEmissions / 1000) * 7);
   };
 
   // Chart options configurations
@@ -420,22 +232,6 @@ const Results = ({ formData, resetCalculator }) => {
         }
       }
     },
-    plugins: [{
-      id: 'barLabels',
-      afterDatasetsDraw(chart) {
-        const { ctx } = chart;
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-          const meta = chart.getDatasetMeta(datasetIndex);
-          meta.data.forEach((bar, index) => {
-            const data = dataset.data[index];
-            ctx.fillStyle = 'black';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(data, bar.x + 5, bar.y);
-          });
-        });
-      }
-    }]
   };
 
   const savingsChartOptions = {
@@ -471,18 +267,6 @@ const Results = ({ formData, resetCalculator }) => {
         }
       }
     }
-  };
-
-  // Add this function to calculate percentage differences
-  const calculatePercentageDifferences = () => {
-    const yourFootprint = currentResult?.total || 0;
-    const indianAvg = 1600;
-    const globalAvg = 3900;
-
-    return {
-      indian: ((yourFootprint - indianAvg) / indianAvg * 100).toFixed(1),
-      global: ((yourFootprint - globalAvg) / globalAvg * 100).toFixed(1)
-    };
   };
 
   return (
@@ -540,7 +324,7 @@ const Results = ({ formData, resetCalculator }) => {
           </div>
           <div className="mt-4 space-y-3 text-base">
             {(() => {
-              const diff = calculatePercentageDifferences();
+              const diff = calculatePercentageDifferences(currentResult?.total);
               return (
                 <>
                   <p className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
@@ -572,7 +356,7 @@ const Results = ({ formData, resetCalculator }) => {
       <div className="mt-8 text-left">
         <h3 className="text-xl font-semibold mb-4">Personalized Recommendations</h3>
         <div className="space-y-6">
-          {generateRecommendations().map((rec, index) => (
+          {generateRecommendations(formData).map((rec, index) => (
             <div key={index} className="bg-white p-4 rounded-lg shadow">
               <h4 className="font-medium text-green-600 mb-2">{rec.title}</h4>
               <p className="text-gray-700">{rec.description}</p>
@@ -658,153 +442,6 @@ const Results = ({ formData, resetCalculator }) => {
       </div>
     </div>
   );
-};
-
-// Calculation functions
-const calculateEnergyFootprint = (energyData, personalData) => {
-  if (!energyData) return 0;
-  
-  let electricityUnits;
-  
-  if (energyData.dontKnowUnits && energyData.electricityBill) {
-    electricityUnits = calculateUnitsFromBill(
-      energyData.electricityBill,
-      energyData.pincode || personalData?.pincode
-    );
-  } else if (energyData.electricityUnits) {
-  electricityUnits = energyData.electricityUnits;
-  } else {
-    electricityUnits = 0;
-  }
-  
-  const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY;
-  const lpgFootprint = (energyData.lpgCylinders || 0) * ENERGY_FACTORS.LPG;
-  
-  return electricityFootprint + lpgFootprint;
-};
-
-const calculateCommuteFootprint = (commuteData) => {
-  if (!commuteData) return 0;
-  
-  let totalEmissions = 0;
-  const workDays = Math.max(0, 7 - (commuteData.wfhDays || 0)) * 52;
-
-  if (commuteData.selectedMode === 'walk-cycle') {
-    totalEmissions += (commuteData.walkCycleDistance || 0) * workDays * COMMUTE_FACTORS['walk-cycle'];
-  }
-
-  // Public Transport
-  if (commuteData.selectedMode === 'public-transport') {
-    totalEmissions += (commuteData.publicTransportDistance || 0) * workDays * COMMUTE_FACTORS['public-transport'];
-  }
-
-  // Two Wheeler
-  if (commuteData.selectedMode === 'two-wheeler') {
-    const factor = commuteData.twoWheelerType === 'electric' 
-      ? COMMUTE_FACTORS['two-wheeler-electric']
-      : COMMUTE_FACTORS['two-wheeler-petrol'];
-    totalEmissions += (commuteData.twoWheelerDistance || 0) * workDays * factor;
-  }
-
-  // Three Wheeler
-  if (commuteData.selectedMode === 'three-wheeler') {
-    totalEmissions += (commuteData.threeWheelerDistance || 0) * workDays * COMMUTE_FACTORS['three-wheeler'];
-  }
-
-  // Four Wheeler
-  if (commuteData.selectedMode === 'four-wheeler') {
-    let factor;
-    if (commuteData.carType === 'electric') {
-      factor = COMMUTE_FACTORS['four-wheeler-electric'];
-    } else if (commuteData.carType === 'hatchback') {
-      factor = COMMUTE_FACTORS['four-wheeler-hatchback'];
-    } else if (commuteData.carType === 'suv') {
-      factor = COMMUTE_FACTORS['four-wheeler-suv'];
-    }
-
-    // Divide by number of passengers if carpooling
-    const passengers = commuteData.passengerCount || 1;
-    totalEmissions += ((commuteData.fourWheelerDistance || 0) * workDays * factor) / passengers;
-  }
-
-  return totalEmissions;
-};
-
-const calculateTravelFootprint = (travelData) => {
-  if (!travelData) return 0;
-  
-  const domesticFlightEmissions = 
-    (travelData.domesticVeryShortFlights || 0) * 500 * FLIGHT_FACTORS.domesticVeryShort +
-    (travelData.domesticShortFlights || 0) * 1000 * FLIGHT_FACTORS.domesticShort +
-    (travelData.domesticMediumFlights || 0) * 2000 * FLIGHT_FACTORS.domesticMedium +
-    (travelData.domesticLongFlights || 0) * 2500 * FLIGHT_FACTORS.domesticLong;
-
-  // Calculate international flight emissions
-  const internationalFlightEmissions = 
-    (travelData.internationalShortFlights || 0) * 3000 * FLIGHT_FACTORS.internationalShort +
-    (travelData.internationalMediumFlights || 0) * 6000 * FLIGHT_FACTORS.internationalMedium +
-    (travelData.internationalLongFlights || 0) * 10000 * FLIGHT_FACTORS.internationalLong +
-    (travelData.internationalUltraLongFlights || 0) * 12000 * FLIGHT_FACTORS.internationalUltraLong;
-
-  // Calculate train journey emissions
-  const trainEmissions = 
-    (travelData.localTrainJourneys || 0) * 100 * TRAIN_FACTORS.localTrain +
-    (travelData.shortTrainJourneys || 0) * 300 * TRAIN_FACTORS.shortTrain +
-    (travelData.mediumTrainJourneys || 0) * 800 * TRAIN_FACTORS.mediumTrain +
-    (travelData.longTrainJourneys || 0) * 1200 * TRAIN_FACTORS.longTrain;
-
-  // Calculate gasoline car emissions
-  const gasolineCarEmissions = 
-    (travelData.localGasolineTrips || 0) * 100 * CAR_FACTORS.gasolineLocal +
-    (travelData.shortGasolineTrips || 0) * 300 * CAR_FACTORS.gasolineShort +
-    (travelData.mediumGasolineTrips || 0) * 800 * CAR_FACTORS.gasolineMedium +
-    (travelData.longGasolineTrips || 0) * 1200 * CAR_FACTORS.gasolineLong;
-
-  // Calculate electric car emissions
-  const electricCarEmissions = 
-    (travelData.localElectricTrips || 0) * 100 * CAR_FACTORS.electricLocal +
-    (travelData.shortElectricTrips || 0) * 300 * CAR_FACTORS.electricShort +
-    (travelData.mediumElectricTrips || 0) * 800 * CAR_FACTORS.electricMedium +
-    (travelData.longElectricTrips || 0) * 1200 * CAR_FACTORS.electricLong;
-
-  return domesticFlightEmissions + internationalFlightEmissions + trainEmissions + 
-         gasolineCarEmissions + electricCarEmissions;
-};
-
-const calculateLifestyleFootprint = (lifestyleData) => {
-  if (!lifestyleData) return 0;
-  
-  let totalEmissions = 0;
-
-  // Calculate food emissions (52 weeks per year)
-  if (lifestyleData.selectedDiet === 'vegan') {
-    totalEmissions += (lifestyleData.plantBasedMeals || 0) * MEAL_FACTORS.plantBased * 52;
-  } else if (lifestyleData.selectedDiet === 'vegetarian') {
-    totalEmissions += (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * 52;
-  } else if (lifestyleData.selectedDiet === 'ovoVegetarian') {
-    totalEmissions += (lifestyleData.eggMeals || 0) * MEAL_FACTORS.egg * 52;
-    totalEmissions += (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * 52;
-  } else if (lifestyleData.selectedDiet === 'nonVegetarian') {
-    totalEmissions += (lifestyleData.chickenFishMeals || 0) * MEAL_FACTORS.chickenFish * 52;
-    totalEmissions += (lifestyleData.redMeatMeals || 0) * MEAL_FACTORS.redMeat * 52;
-    totalEmissions += (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * 52;
-  }
-
-  // Calculate waste emissions
-  const dailyWasteAmount = 0.2; // kg per day
-  const annualWaste = dailyWasteAmount * 365;
-  if (lifestyleData.compostOption === 'yes') {
-    totalEmissions += WASTE_FACTORS.composting * annualWaste * 0.2; // 80% reduction
-  } else {
-    totalEmissions += WASTE_FACTORS.landfilling * annualWaste;
-  }
-
-  // Calculate fashion emissions
-  if (lifestyleData.fashionFrequency) {
-    totalEmissions += FASHION_FACTORS[lifestyleData.fashionFrequency] * 12; // Annual fashion footprint
-  }
-
-  return totalEmissions;
 };
 
 export default Results; 

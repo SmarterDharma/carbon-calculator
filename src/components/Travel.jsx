@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { handleNonNegativeInput } from './utils';
 
 const CheckIcon = () => (
   <svg 
@@ -16,6 +17,19 @@ const CheckIcon = () => (
 
 const Travel = ({ formData, updateFormData }) => {
   const [openSection, setOpenSection] = useState(null);
+
+  const handleInputChange = (e) => {
+    const { name, type } = e.target;
+    let value;
+
+    if (type === 'number') {
+      value = handleNonNegativeInput(e);
+    } else {
+      value = e.target.value;
+    }
+
+    updateFormData('travel', { [name]: value });
+  };
 
   const handleCountChange = (name, delta) => {
     const currentValue = formData?.[name] || 0;
@@ -77,7 +91,7 @@ const Travel = ({ formData, updateFormData }) => {
         min="0"
         max="20"
         value={formData?.[name] || 0}
-        onChange={(e) => updateFormData('travel', { [name]: Math.max(0, parseInt(e.target.value) || 0) })}
+        onChange={handleInputChange}
         className="w-20 text-center input-field"
       />
       <button

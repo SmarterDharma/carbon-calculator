@@ -1,10 +1,18 @@
 import React from 'react';
+import { handleNonNegativeInput } from './utils';
 
 const Lifestyle = ({ formData, updateFormData }) => {
   const handleInputChange = (e) => {
-    const { name, value, type } = e.target;
-    const finalValue = type === 'range' ? parseInt(value) : value;
-    updateFormData('lifestyle', { [name]: finalValue });
+    const { name, type } = e.target;
+    let value;
+
+    if (type === 'number') {
+      value = handleNonNegativeInput(e);
+    } else {
+      value = e.target.value;
+    }
+
+    updateFormData('lifestyle', { [name]: value });
   };
 
   return (
