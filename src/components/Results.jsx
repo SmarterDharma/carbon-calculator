@@ -4,6 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import { saveResult, getAllResults } from '../utils/storage';
+import {
+  ENERGY_FACTORS,
+  COMMUTE_FACTORS,
+  FLIGHT_FACTORS,
+  TRAIN_FACTORS,
+  CAR_FACTORS,
+  MEAL_FACTORS,
+  WASTE_FACTORS,
+  FASHION_FACTORS,
+  CHART_COLORS
+} from '../constants';
 
 // Register ChartJS components
 ChartJS.register(
@@ -83,18 +94,8 @@ const Results = ({ formData, resetCalculator }) => {
         currentResult?.travel || 0,
         currentResult?.lifestyle || 0
       ],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.8)',
-        'rgba(54, 162, 235, 0.8)',
-        'rgba(255, 206, 86, 0.8)',
-        'rgba(75, 192, 192, 0.8)'
-      ],
-      borderColor: [
-        'rgba(255, 99, 132, 1)',
-        'rgba(54, 162, 235, 1)',
-        'rgba(255, 206, 86, 1)',
-        'rgba(75, 192, 192, 1)'
-      ],
+      backgroundColor: CHART_COLORS.backgroundColor.slice(0, 4),
+      borderColor: CHART_COLORS.borderColor.slice(0, 4),
       borderWidth: 1
     }]
   };
@@ -434,14 +435,11 @@ const Results = ({ formData, resetCalculator }) => {
 const calculateEnergyFootprint = (energyData) => {
   if (!energyData) return 0;
   
-  const ELECTRICITY_FACTOR = 0.716; // kg CO2 per unit
-  const LPG_FACTOR = 44.446; // kg CO2 per cylinder
-  
   const electricityUnits = energyData.electricityUnits || 
-    (energyData.dontKnowUnits ? (energyData.electricityBill || 0) / 7.11 : 0);
+    (energyData.dontKnowUnits ? (energyData.electricityBill || 0) / ENERGY_FACTORS.ELECTRICITY_BILL_TO_UNITS : 0);
   
-  const electricityFootprint = electricityUnits * ELECTRICITY_FACTOR;
-  const lpgFootprint = (energyData.lpgCylinders || 0) * LPG_FACTOR;
+  const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY;
+  const lpgFootprint = (energyData.lpgCylinders || 0) * ENERGY_FACTORS.LPG;
   
   return electricityFootprint + lpgFootprint;
 };
@@ -449,52 +447,40 @@ const calculateEnergyFootprint = (energyData) => {
 const calculateCommuteFootprint = (commuteData) => {
   if (!commuteData) return 0;
   
-  const EMISSION_FACTORS = {
-    'walk-cycle': 0,
-    'public-transport': 0.027178,
-    'two-wheeler-electric': 0.02864,
-    'two-wheeler-petrol': 0.0448,
-    'three-wheeler': 0.10768,
-    'four-wheeler-electric': 0.0895,
-    'four-wheeler-hatchback': 0.1441,
-    'four-wheeler-suv': 0.20992
-  };
-
   let totalEmissions = 0;
-  const workDays = Math.max(0, 7 - (commuteData.wfhDays || 0)) * 52; // Annual working days
+  const workDays = Math.max(0, 7 - (commuteData.wfhDays || 0)) * 52;
 
-  // Walk/Cycle
   if (commuteData.selectedMode === 'walk-cycle') {
-    totalEmissions += (commuteData.walkCycleDistance || 0) * workDays * EMISSION_FACTORS['walk-cycle'];
+    totalEmissions += (commuteData.walkCycleDistance || 0) * workDays * COMMUTE_FACTORS['walk-cycle'];
   }
 
   // Public Transport
   if (commuteData.selectedMode === 'public-transport') {
-    totalEmissions += (commuteData.publicTransportDistance || 0) * workDays * EMISSION_FACTORS['public-transport'];
+    totalEmissions += (commuteData.publicTransportDistance || 0) * workDays * COMMUTE_FACTORS['public-transport'];
   }
 
   // Two Wheeler
   if (commuteData.selectedMode === 'two-wheeler') {
     const factor = commuteData.twoWheelerType === 'electric' 
-      ? EMISSION_FACTORS['two-wheeler-electric']
-      : EMISSION_FACTORS['two-wheeler-petrol'];
+      ? COMMUTE_FACTORS['two-wheeler-electric']
+      : COMMUTE_FACTORS['two-wheeler-petrol'];
     totalEmissions += (commuteData.twoWheelerDistance || 0) * workDays * factor;
   }
 
   // Three Wheeler
   if (commuteData.selectedMode === 'three-wheeler') {
-    totalEmissions += (commuteData.threeWheelerDistance || 0) * workDays * EMISSION_FACTORS['three-wheeler'];
+    totalEmissions += (commuteData.threeWheelerDistance || 0) * workDays * COMMUTE_FACTORS['three-wheeler'];
   }
 
   // Four Wheeler
   if (commuteData.selectedMode === 'four-wheeler') {
     let factor;
     if (commuteData.carType === 'electric') {
-      factor = EMISSION_FACTORS['four-wheeler-electric'];
+      factor = COMMUTE_FACTORS['four-wheeler-electric'];
     } else if (commuteData.carType === 'hatchback') {
-      factor = EMISSION_FACTORS['four-wheeler-hatchback'];
+      factor = COMMUTE_FACTORS['four-wheeler-hatchback'];
     } else if (commuteData.carType === 'suv') {
-      factor = EMISSION_FACTORS['four-wheeler-suv'];
+      factor = COMMUTE_FACTORS['four-wheeler-suv'];
     }
 
     // Divide by number of passengers if carpooling
@@ -508,40 +494,6 @@ const calculateCommuteFootprint = (commuteData) => {
 const calculateTravelFootprint = (travelData) => {
   if (!travelData) return 0;
   
-  const FLIGHT_FACTORS = {
-    // Domestic Flights (kg CO2 per km)
-    domesticVeryShort: 0.145, // Higher per km due to takeoff/landing
-    domesticShort: 0.133,
-    domesticMedium: 0.127,
-    domesticLong: 0.121,
-    
-    // International Flights
-    internationalShort: 0.121,
-    internationalMedium: 0.110,
-    internationalLong: 0.095,
-    internationalUltraLong: 0.085
-  };
-
-  const TRAIN_FACTORS = {
-    localTrain: 0.029,      // kg CO2 per km
-    shortTrain: 0.027,
-    mediumTrain: 0.025,
-    longTrain: 0.024
-  };
-
-  const CAR_FACTORS = {
-    gasolineLocal: 0.171,   // kg CO2 per km
-    gasolineShort: 0.165,
-    gasolineMedium: 0.160,
-    gasolineLong: 0.155,
-    
-    electricLocal: 0.053,   // kg CO2 per km
-    electricShort: 0.051,
-    electricMedium: 0.049,
-    electricLong: 0.047
-  };
-
-  // Calculate domestic flight emissions
   const domesticFlightEmissions = 
     (travelData.domesticVeryShortFlights || 0) * 500 * FLIGHT_FACTORS.domesticVeryShort +
     (travelData.domesticShortFlights || 0) * 1000 * FLIGHT_FACTORS.domesticShort +
@@ -583,25 +535,6 @@ const calculateTravelFootprint = (travelData) => {
 const calculateLifestyleFootprint = (lifestyleData) => {
   if (!lifestyleData) return 0;
   
-  const MEAL_FACTORS = {
-    plantBased: 0.42,      // kg CO2e per meal
-    vegetarian: 0.52,
-    egg: 0.62,
-    chickenFish: 0.72,
-    redMeat: 1.05
-  };
-
-  const WASTE_FACTORS = {
-    composting: 0.32,
-    landfilling: 1.29
-  };
-
-  const FASHION_FACTORS = {
-    once: 100,
-    twice: 200,
-    thrice: 300
-  };
-
   let totalEmissions = 0;
 
   // Calculate food emissions (52 weeks per year)
