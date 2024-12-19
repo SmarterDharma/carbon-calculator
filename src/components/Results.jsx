@@ -13,14 +13,7 @@ import {
   calculateRequiredTrees,
   calculatePercentageDifferences,
   generateRecommendations,
-  calculateSolarPVSavings,
-  calculateSolarWaterSavings,
-  calculatePublicTransportSavings,
-  calculateElectricVehicleSavings,
-  calculateVirtualMeetingsSavings,
-  calculateDietSavings,
-  calculateCompostingSavings,
-  calculateTreePlantingSavings
+  calculateUpdatedEmissions
 } from './utils';
 
 // Register ChartJS components
@@ -277,34 +270,6 @@ const Results = ({ formData, resetCalculator }) => {
     }
   };
 
-  const calculateUpdatedEmissions = () => {
-    const selectedSavings = selectedPledges.reduce((total, pledge) => {
-      switch (pledge) {
-        case 'solarPV':
-          return total + (calculateSolarPVSavings(formData.energy) || 0);
-        case 'solarWater':
-          return total + (calculateSolarWaterSavings(formData.energy) || 0);
-        case 'publicTransport':
-          return total + (calculatePublicTransportSavings(formData.commute) || 0);
-        case 'electricVehicle':
-          return total + (calculateElectricVehicleSavings(formData.commute) || 0);
-        case 'virtualMeetings':
-          return total + (calculateVirtualMeetingsSavings(formData.travel) || 0);
-        case 'diet':
-          return total + (calculateDietSavings(formData.lifestyle) || 0);
-        case 'composting':
-          return total + (calculateCompostingSavings(formData.lifestyle) || 0);
-        case 'treePlanting':
-          const requiredTrees = calculateRequiredTrees(currentResult?.total || 0);
-          return total + calculateTreePlantingSavings(requiredTrees);
-        default:
-          return total;
-      }
-    }, 0);
-
-    return Math.max(0, (currentResult?.total || 0) - selectedSavings);
-  };
-
   const handlePledgeToggle = (pledgeId) => {
     setSelectedPledges(prev => 
       prev.includes(pledgeId) 
@@ -408,7 +373,7 @@ const Results = ({ formData, resetCalculator }) => {
       <div className="mt-8 text-left">
         <h3 className="text-xl font-semibold mb-4">Personalized Recommendations</h3>
         <div className="space-y-6">
-          {generateRecommendations(formData).map((rec, index) => (
+          {generateRecommendations(formData, selectedPledges, currentResult).map((rec, index) => (
             <div key={index} className="bg-white p-4 rounded-lg shadow">
               <h4 className="font-medium text-green-600 mb-2">{rec.title}</h4>
               <p className="text-gray-700">{rec.description}</p>
@@ -417,11 +382,11 @@ const Results = ({ formData, resetCalculator }) => {
                   <p>
                     After implementing other selected pledges, you'll need to plant{' '}
                     <span className="font-medium text-green-600">
-                      {calculateRequiredTrees(calculateUpdatedEmissions())}
+                      {calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))}
                     </span>{' '}
                     trees to offset your remaining emissions of{' '}
                     <span className="font-medium text-green-600">
-                      {Math.round(calculateUpdatedEmissions())} Kg CO₂e
+                      {Math.round(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} Kg CO₂e
                     </span>.
                   </p>
                   <p className="mt-1">
@@ -499,7 +464,7 @@ const Results = ({ formData, resetCalculator }) => {
                 <p className="text-sm text-gray-600">
                   You've committed to reducing your emissions by{' '}
                   <span className="font-bold text-green-600">
-                    {Math.round(currentResult?.total - calculateUpdatedEmissions())} Kg CO₂e
+                    {Math.round(currentResult?.total - calculateUpdatedEmissions(formData, selectedPledges, currentResult))} Kg CO₂e
                   </span>{' '}
                   annually.
                 </p>
@@ -540,15 +505,15 @@ const Results = ({ formData, resetCalculator }) => {
           ) : (
             <>
               <p className="text-gray-700 mb-2">Select recommendations to implement:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {generateRecommendations(formData).map((rec, index) => (
+              <div className="space-y-3">
+                {generateRecommendations(formData, selectedPledges, currentResult).map((rec, index) => (
                   <div 
                     key={index} 
                     className={`p-3 rounded-lg border transition-colors cursor-pointer
                       ${selectedPledges.includes(rec.id) 
                         ? 'border-green-500 bg-green-50' 
                         : 'border-gray-200 hover:border-green-300'}
-                      ${rec.isTreePlanting ? 'md:col-span-2 bg-green-50/50' : ''}`}
+                      ${(rec.isTreePlanting || rec.isForestFirst) ? 'bg-green-50/50' : ''}`}
                     onClick={() => handlePledgeToggle(rec.id)}
                   >
                     <div className="flex items-start gap-2">
@@ -561,9 +526,9 @@ const Results = ({ formData, resetCalculator }) => {
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium text-gray-900">{rec.title}</h4>
-                          {rec.isTreePlanting && (
+                          {(rec.isTreePlanting || rec.isForestFirst) && (
                             <span className="text-sm font-medium text-green-600">
-                              {calculateRequiredTrees(calculateUpdatedEmissions())} trees needed
+                              {calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees needed
                             </span>
                           )}
                         </div>
@@ -573,7 +538,7 @@ const Results = ({ formData, resetCalculator }) => {
                             <p>
                               After implementing selected changes, you'll need to plant{' '}
                               <span className="font-medium text-green-600">
-                                {calculateRequiredTrees(calculateUpdatedEmissions())}
+                                {calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))}
                               </span>{' '}
                               trees to offset your remaining emissions.
                             </p>
@@ -582,42 +547,41 @@ const Results = ({ formData, resetCalculator }) => {
                             </p>
                           </div>
                         )}
+                        {rec.isForestFirst && (
+                          <div className="mt-2">
+                            <a 
+                              href={rec.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center text-xs text-green-600 hover:text-green-700"
+                            >
+                              Learn more about Forest First Samithi
+                              <svg 
+                                className="ml-1 w-3 h-3" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path 
+                                  strokeLinecap="round" 
+                                  strokeLinejoin="round" 
+                                  strokeWidth={2} 
+                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
+                                />
+                              </svg>
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Add back Trees Required section */}
-              <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Trees Required After Selected Changes</h4>
-                    <p className="text-sm text-gray-600">
-                      Based on your selected commitments
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-3xl font-bold text-green-600">
-                      {calculateRequiredTrees(calculateUpdatedEmissions())}
-                    </p>
-                    <p className="text-sm text-gray-500">trees</p>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-600">
-                  {selectedPledges.length > 0 ? (
-                    <p>
-                      By implementing your selected changes, you'll reduce the number of trees needed 
-                      from {calculateRequiredTrees(currentResult?.total || 0)} to {calculateRequiredTrees(calculateUpdatedEmissions())}.
-                    </p>
-                  ) : (
-                    <p>Select recommendations above to see how they affect your tree planting requirement.</p>
-                  )}
-                </div>
-              </div>
+              
 
               {/* Existing buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-6">
+              <div className="flex justify-center mt-6">
                 <button
                   onClick={handlePledgeAcceptance}
                   disabled={selectedPledges.length === 0}
@@ -628,28 +592,6 @@ const Results = ({ formData, resetCalculator }) => {
                 >
                   I Accept This Pledge
                 </button>
-                
-                <a 
-                  href="https://forestfirstsamithi.org/contribute/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors w-full sm:w-auto justify-center"
-                >
-                  Offset with Forest First Samithi
-                  <svg 
-                    className="ml-2 w-4 h-4" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
-                    />
-                  </svg>
-                </a>
               </div>
             </>
           )}

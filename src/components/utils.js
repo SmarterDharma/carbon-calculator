@@ -364,9 +364,9 @@ export const calculateDietSavings = (lifestyleData) => {
        (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian) * weeksPerYear;
     
     // Calculate if all meals were vegan
-    const totalMeals = (lifestyleData.chickenFishMeals || 0) +
-                      (lifestyleData.redMeatMeals || 0) +
-                      (lifestyleData.vegetarianMeals || 0);
+    const totalMeals = (+lifestyleData.chickenFishMeals || 0) +
+                      (+lifestyleData.redMeatMeals || 0) +
+                      (+lifestyleData.vegetarianMeals || 0);
     veganEmissions = totalMeals * MEAL_FACTORS.plantBased * weeksPerYear;
   } else if (lifestyleData.selectedDiet === 'vegetarian') {
     currentEmissions = (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * weeksPerYear;
@@ -389,7 +389,7 @@ export const calculateCompostingSavings = (lifestyleData) => {
   return landfillEmissions - compostEmissions;
 };
 
-export const generateRecommendations = (formData) => {
+export const generateRecommendations = (formData, selectedPledges, currentResult) => {
   const recommendations = [];
   
   // Energy recommendations
@@ -453,7 +453,7 @@ export const generateRecommendations = (formData) => {
 
   // Add tree planting recommendation for remaining emissions
   const remainingEmissions = formData.total || 0;
-  const requiredTrees = calculateRequiredTrees(remainingEmissions);
+  const requiredTrees = calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult));
   if (requiredTrees > 0) {
     recommendations.push({
       id: 'treePlanting',
@@ -505,3 +505,28 @@ export const calculateTreePlantingSavings = (treeCount) => {
   // Each tree absorbs approximately 22kg CO2 per year
   return treeCount * 22;
 };
+
+export const calculateUpdatedEmissions = (formData, selectedPledges, currentResult) => {
+    const selectedSavings = selectedPledges.reduce((total, pledge) => {
+      switch (pledge) {
+        case 'solarPV':
+          return total + (calculateSolarPVSavings(formData.energy) || 0);
+        case 'solarWater':
+          return total + (calculateSolarWaterSavings(formData.energy) || 0);
+        case 'publicTransport':
+          return total + (calculatePublicTransportSavings(formData.commute) || 0);
+        case 'electricVehicle':
+          return total + (calculateElectricVehicleSavings(formData.commute) || 0);
+        case 'virtualMeetings':
+          return total + (calculateVirtualMeetingsSavings(formData.travel) || 0);
+        case 'diet':
+          return total + (calculateDietSavings(formData.lifestyle) || 0);
+        case 'composting':
+          return total + (calculateCompostingSavings(formData.lifestyle) || 0);
+        default:
+          return total;
+      }
+    }, 0);
+
+    return Math.max(0, (currentResult?.total || 0) - selectedSavings);
+  };
