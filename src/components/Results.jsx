@@ -27,7 +27,6 @@ ChartJS.register(
 );
 
 const Results = ({ formData, resetCalculator }) => {
-  const [savedResults, setSavedResults] = useState([]);
   const [currentResult, setCurrentResult] = useState(null);
 
   const handleRetake = () => {
@@ -57,7 +56,10 @@ const Results = ({ formData, resetCalculator }) => {
       userData: {
         name: formData.personal?.name,
         email: formData.personal?.email,
-        household: formData.personal?.household
+        household: formData.personal?.household,
+        age: formData.personal?.age,
+        gender: formData.personal?.gender,
+        pincode: formData.personal?.pincode
       },
       details: {
         energy: formData.energy,
@@ -73,10 +75,6 @@ const Results = ({ formData, resetCalculator }) => {
     const result = calculateFootprints();
     const savedResult = saveResult(result);
     setCurrentResult(savedResult);
-    
-    // Load all results
-    const allResults = getAllResults();
-    setSavedResults(allResults);
   }, [formData]);
 
   // Chart configurations

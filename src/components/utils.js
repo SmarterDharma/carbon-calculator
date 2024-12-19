@@ -86,7 +86,7 @@ export const calculateEnergyFootprint = (energyData, personalData) => {
   const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY;
   const lpgFootprint = (energyData.lpgCylinders || 0) * ENERGY_FACTORS.LPG;
   
-  return electricityFootprint + lpgFootprint;
+  return (electricityFootprint + lpgFootprint) / personalData?.household || 1;
 };
 
 export const calculateCommuteFootprint = (commuteData) => {
@@ -94,29 +94,36 @@ export const calculateCommuteFootprint = (commuteData) => {
   
   let totalEmissions = 0;
   
+  // Calculate working days per year
+  const wfhDays = commuteData.wfhDays || 0;
+  const workDaysPerWeek = 6; // Assuming 5-day work week
+  const weeksPerYear = 52;
+  const workingDaysPerYear = (workDaysPerWeek - wfhDays) * weeksPerYear;
+  
   // Walk/Cycle
-  totalEmissions += (commuteData.walkCycleDistance || 0) * COMMUTE_FACTORS['walk-cycle'] * 260;
+  totalEmissions += (commuteData.walkCycleDistance || 0) * COMMUTE_FACTORS['walk-cycle'] * workingDaysPerYear;
   
   // Public Transport
-  totalEmissions += (commuteData.publicTransportDistance || 0) * COMMUTE_FACTORS['public-transport'] * 260;
+  totalEmissions += (commuteData.publicTransportDistance || 0) * COMMUTE_FACTORS['public-transport'] * workingDaysPerYear;
   
   // Two Wheeler
   if (commuteData.twoWheelerType === 'electric') {
-    totalEmissions += (commuteData.twoWheelerDistance || 0) * COMMUTE_FACTORS['two-wheeler-electric'] * 260;
+    totalEmissions += (commuteData.twoWheelerDistance || 0) * COMMUTE_FACTORS['two-wheeler-electric'] * workingDaysPerYear;
   } else {
-    totalEmissions += (commuteData.twoWheelerDistance || 0) * COMMUTE_FACTORS['two-wheeler-petrol'] * 260;
+    totalEmissions += (commuteData.twoWheelerDistance || 0) * COMMUTE_FACTORS['two-wheeler-petrol'] * workingDaysPerYear;
   }
   
   // Three Wheeler
-  totalEmissions += (commuteData.threeWheelerDistance || 0) * COMMUTE_FACTORS['three-wheeler'] * 260;
+  totalEmissions += (commuteData.threeWheelerDistance || 0) * COMMUTE_FACTORS['three-wheeler'] * workingDaysPerYear;
   
   // Four Wheeler
+  const passengerCount = commuteData.passengerCount || 1;
   if (commuteData.carType === 'electric') {
-    totalEmissions += (commuteData.fourWheelerDistance || 0) * COMMUTE_FACTORS['four-wheeler-electric'] * 260;
+    totalEmissions += (commuteData.fourWheelerDistance || 0) * COMMUTE_FACTORS['four-wheeler-electric'] * workingDaysPerYear / passengerCount;
   } else if (commuteData.carType === 'suv') {
-    totalEmissions += (commuteData.fourWheelerDistance || 0) * COMMUTE_FACTORS['four-wheeler-suv'] * 260;
+    totalEmissions += (commuteData.fourWheelerDistance || 0) * COMMUTE_FACTORS['four-wheeler-suv'] * workingDaysPerYear / passengerCount;
   } else {
-    totalEmissions += (commuteData.fourWheelerDistance || 0) * COMMUTE_FACTORS['four-wheeler-hatchback'] * 260;
+    totalEmissions += (commuteData.fourWheelerDistance || 0) * COMMUTE_FACTORS['four-wheeler-hatchback'] * workingDaysPerYear / passengerCount;
   }
   
   return totalEmissions;
@@ -272,17 +279,23 @@ export const calculatePublicTransportSavings = (commuteData) => {
   const distance = commuteData.fourWheelerDistance || 0;
   let currentEmissions = 0;
   
+  // Calculate working days per year
+  const wfhDays = commuteData.wfhDays || 0;
+  const workDaysPerWeek = 6;
+  const weeksPerYear = 52;
+  const workingDaysPerYear = (workDaysPerWeek - wfhDays) * weeksPerYear;
+  
   // Calculate current emissions based on car type
   if (commuteData.carType === 'electric') {
-    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-electric'] * 260;
+    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-electric'] * workingDaysPerYear;
   } else if (commuteData.carType === 'suv') {
-    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-suv'] * 260;
+    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-suv'] * workingDaysPerYear;
   } else {
-    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-hatchback'] * 260;
+    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-hatchback'] * workingDaysPerYear;
   }
   
   // Calculate emissions if using public transport
-  const publicTransportEmissions = distance * COMMUTE_FACTORS['public-transport'] * 260;
+  const publicTransportEmissions = distance * COMMUTE_FACTORS['public-transport'] * workingDaysPerYear;
   
   return currentEmissions - publicTransportEmissions;
 };
@@ -290,13 +303,19 @@ export const calculatePublicTransportSavings = (commuteData) => {
 export const calculateElectricVehicleSavings = (commuteData) => {
   if (!commuteData) return 0;
   
+  // Calculate working days per year
+  const wfhDays = commuteData.wfhDays || 0;
+  const workDaysPerWeek = 5;
+  const weeksPerYear = 52;
+  const workingDaysPerYear = (workDaysPerWeek - wfhDays) * weeksPerYear;
+  
   let potentialSavings = 0;
   
   // Two wheeler conversion savings
   if (commuteData.twoWheelerType === 'petrol') {
     const distance = commuteData.twoWheelerDistance || 0;
-    const currentEmissions = distance * COMMUTE_FACTORS['two-wheeler-petrol'] * 260;
-    const electricEmissions = distance * COMMUTE_FACTORS['two-wheeler-electric'] * 260;
+    const currentEmissions = distance * COMMUTE_FACTORS['two-wheeler-petrol'] * workingDaysPerYear;
+    const electricEmissions = distance * COMMUTE_FACTORS['two-wheeler-electric'] * workingDaysPerYear;
     potentialSavings += currentEmissions - electricEmissions;
   }
   
@@ -306,8 +325,8 @@ export const calculateElectricVehicleSavings = (commuteData) => {
     const currentEmissions = distance * 
       (commuteData.carType === 'suv' ? 
         COMMUTE_FACTORS['four-wheeler-suv'] : 
-        COMMUTE_FACTORS['four-wheeler-hatchback']) * 260;
-    const electricEmissions = distance * COMMUTE_FACTORS['four-wheeler-electric'] * 260;
+        COMMUTE_FACTORS['four-wheeler-hatchback']) * workingDaysPerYear;
+    const electricEmissions = distance * COMMUTE_FACTORS['four-wheeler-electric'] * workingDaysPerYear;
     potentialSavings += currentEmissions - electricEmissions;
   }
   
@@ -376,8 +395,8 @@ export const generateRecommendations = (formData) => {
   // Energy recommendations
   if (!formData.energy?.solarPV) {
     const monthlyUnits = formData.energy?.electricityUnits || 
-      (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
-    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4.5));
+      calculateUnitsFromBill(formData.energy?.electricityBill || 0, formData.personal?.pincode);
+    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4)); // 4 is the average units per day, 365 is the number of days in a year, 12 is the number of months in a year
     if (requiredKWP > 0) {
       recommendations.push({
         title: 'Solar Power Installation',

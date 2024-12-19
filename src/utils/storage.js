@@ -1,34 +1,17 @@
-export const saveResult = (result) => {
+export const saveResult = async (result) => {
   try {
-    // Get existing results
-    const existingResults = JSON.parse(localStorage.getItem('carbonFootprints') || '[]');
+    // await fetch('http://localhost:5001/v2/carbon-calculator', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify(result),
+    // });
     
-    // Add timestamp to the new result
-    const resultWithTimestamp = {
-      ...result,
-      timestamp: new Date().toISOString(),
-      id: Date.now() // Unique identifier
-    };
-    
-    // Add new result to the array
-    existingResults.push(resultWithTimestamp);
-    
-    // Save back to localStorage
-    localStorage.setItem('carbonFootprints', JSON.stringify(existingResults));
-    
-    return resultWithTimestamp;
+    return result;
   } catch (error) {
     console.error('Error saving result:', error);
     return null;
-  }
-};
-
-export const getAllResults = () => {
-  try {
-    return JSON.parse(localStorage.getItem('carbonFootprints') || '[]');
-  } catch (error) {
-    console.error('Error getting results:', error);
-    return [];
   }
 };
 
