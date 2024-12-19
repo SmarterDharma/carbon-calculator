@@ -287,7 +287,6 @@ function App() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center gap-3">
-            <img src="/logo-2.svg" alt="Dharma Meter Logo" className="h-8" />
             <h1 className="text-2xl font-bold text-gray-800">Dharma Meter</h1>
           </div>
         </div>
