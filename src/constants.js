@@ -102,44 +102,44 @@ export const COMMUTE_FACTORS = {
 // Travel Emission Factors
 export const FLIGHT_FACTORS = {
   // Domestic Flights (kg CO2 per km)
-  domesticVeryShort: 0.145,
-  domesticShort: 0.133,
-  domesticMedium: 0.127,
+  domesticVeryShort: 0.121,
+  domesticShort: 0.121,
+  domesticMedium: 0.121,
   domesticLong: 0.121,
   
   // International Flights
   internationalShort: 0.121,
   internationalMedium: 0.110,
-  internationalLong: 0.095,
-  internationalUltraLong: 0.085
+  internationalLong: 0.0741,
+  internationalUltraLong: 0.0741
 };
 
 export const TRAIN_FACTORS = {
-  localTrain: 0.029,
-  shortTrain: 0.027,
-  mediumTrain: 0.025,
-  longTrain: 0.024
+  localTrain: 0.007963,
+  shortTrain: 0.007963,
+  mediumTrain: 0.007963,
+  longTrain: 0.007963
 };
 
 export const CAR_FACTORS = {
-  gasolineLocal: 0.171,
-  gasolineShort: 0.165,
-  gasolineMedium: 0.160,
-  gasolineLong: 0.155,
+  gasolineLocal: 0.1874,
+  gasolineShort: 0.1874,
+  gasolineMedium: 0.1874,
+  gasolineLong: 0.1874,
   
-  electricLocal: 0.053,
-  electricShort: 0.051,
-  electricMedium: 0.049,
-  electricLong: 0.047
+  electricLocal: 0.0895,
+  electricShort: 0.0895,
+  electricMedium: 0.0895,
+  electricLong: 0.0895
 };
 
 // Lifestyle Emission Factors
 export const MEAL_FACTORS = {
-  plantBased: 0.42,      // kg CO2e per meal
-  vegetarian: 0.52,
-  egg: 0.62,
-  chickenFish: 0.72,
-  redMeat: 1.05
+  plantBased: 0.575,      // kg CO2e per meal
+  vegetarian: 0.66,
+  egg: 0.675,
+  chickenFish: 0.71,
+  redMeat: 1.0
 };
 
 export const WASTE_FACTORS = {
