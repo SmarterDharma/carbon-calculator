@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
-import { saveResult, getAllResults } from '../utils/storage';
+import { saveResult } from '../utils/storage';
 import {
   calculateEnergyFootprint,
   calculateCommuteFootprint,
@@ -12,7 +12,15 @@ import {
   calculateSavingsSummary,
   calculateRequiredTrees,
   calculatePercentageDifferences,
-  generateRecommendations
+  generateRecommendations,
+  calculateSolarPVSavings,
+  calculateSolarWaterSavings,
+  calculatePublicTransportSavings,
+  calculateElectricVehicleSavings,
+  calculateVirtualMeetingsSavings,
+  calculateDietSavings,
+  calculateCompostingSavings,
+  calculateTreePlantingSavings
 } from './utils';
 
 // Register ChartJS components
@@ -28,6 +36,8 @@ ChartJS.register(
 
 const Results = ({ formData, resetCalculator }) => {
   const [currentResult, setCurrentResult] = useState(null);
+  const [selectedPledges, setSelectedPledges] = useState([]);
+  const [pledgeAccepted, setPledgeAccepted] = useState(false);
 
   const handleRetake = () => {
     if (window.confirm('Are you sure you want to retake the calculator? All current data will be lost.')) {
@@ -73,8 +83,8 @@ const Results = ({ formData, resetCalculator }) => {
   useEffect(() => {
     // Calculate and save result when component mounts
     const result = calculateFootprints();
-    const savedResult = saveResult(result);
-    setCurrentResult(savedResult);
+    setCurrentResult(result);
+    saveResult(result);
   }, [formData]);
 
   // Chart configurations
@@ -267,6 +277,50 @@ const Results = ({ formData, resetCalculator }) => {
     }
   };
 
+  const calculateUpdatedEmissions = () => {
+    const selectedSavings = selectedPledges.reduce((total, pledge) => {
+      switch (pledge) {
+        case 'solarPV':
+          return total + (calculateSolarPVSavings(formData.energy) || 0);
+        case 'solarWater':
+          return total + (calculateSolarWaterSavings(formData.energy) || 0);
+        case 'publicTransport':
+          return total + (calculatePublicTransportSavings(formData.commute) || 0);
+        case 'electricVehicle':
+          return total + (calculateElectricVehicleSavings(formData.commute) || 0);
+        case 'virtualMeetings':
+          return total + (calculateVirtualMeetingsSavings(formData.travel) || 0);
+        case 'diet':
+          return total + (calculateDietSavings(formData.lifestyle) || 0);
+        case 'composting':
+          return total + (calculateCompostingSavings(formData.lifestyle) || 0);
+        case 'treePlanting':
+          const requiredTrees = calculateRequiredTrees(currentResult?.total || 0);
+          return total + calculateTreePlantingSavings(requiredTrees);
+        default:
+          return total;
+      }
+    }, 0);
+
+    return Math.max(0, (currentResult?.total || 0) - selectedSavings);
+  };
+
+  const handlePledgeToggle = (pledgeId) => {
+    setSelectedPledges(prev => 
+      prev.includes(pledgeId) 
+        ? prev.filter(p => p !== pledgeId)
+        : [...prev, pledgeId]
+    );
+  };
+
+  const handlePledgeAcceptance = () => {
+    if (selectedPledges.length === 0) {
+      alert('Please select at least one recommendation to pledge.');
+      return;
+    }
+    setPledgeAccepted(true);
+  };
+
   return (
     <div className="section-container max-w-4xl mx-auto">
       {/* Header with retake button */}
@@ -358,6 +412,23 @@ const Results = ({ formData, resetCalculator }) => {
             <div key={index} className="bg-white p-4 rounded-lg shadow">
               <h4 className="font-medium text-green-600 mb-2">{rec.title}</h4>
               <p className="text-gray-700">{rec.description}</p>
+              {rec.isTreePlanting && (
+                <div className="mt-2 text-xs text-gray-500">
+                  <p>
+                    After implementing other selected pledges, you'll need to plant{' '}
+                    <span className="font-medium text-green-600">
+                      {calculateRequiredTrees(calculateUpdatedEmissions())}
+                    </span>{' '}
+                    trees to offset your remaining emissions of{' '}
+                    <span className="font-medium text-green-600">
+                      {Math.round(calculateUpdatedEmissions())} Kg CO₂e
+                    </span>.
+                  </p>
+                  <p className="mt-1">
+                    Trees take approximately 10 years to fully offset this amount of carbon.
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -384,11 +455,26 @@ const Results = ({ formData, resetCalculator }) => {
               </p>
             </div>
             <div className="bg-white p-4 rounded-lg shadow">
-              <h4 className="font-medium text-red-600 mb-2">Remaining Emissions After Changes</h4>
-              <p className="text-2xl font-bold flex items-baseline">
-                <span>{Math.round(remainingEmissions)}</span>
-                <span className="text-gray-500 text-xl ml-2">Kg CO₂e</span>
-              </p>
+              {remainingEmissions <= 0 ? (
+                <>
+                  <h4 className="font-medium text-green-600 mb-2">Carbon Negative Achievement!</h4>
+                  <p className="text-2xl font-bold flex items-baseline">
+                    <span>{Math.abs(Math.round(remainingEmissions))}</span>
+                    <span className="text-gray-500 text-xl ml-2">Kg CO₂e</span>
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Your changes would make you carbon negative, removing an additional {Math.abs(Math.round(remainingEmissions))} Kg CO₂e from the atmosphere!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h4 className="font-medium text-red-600 mb-2">Remaining Emissions After Changes</h4>
+                  <p className="text-2xl font-bold flex items-baseline">
+                    <span>{Math.round(remainingEmissions)}</span>
+                    <span className="text-gray-500 text-xl ml-2">Kg CO₂e</span>
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -398,44 +484,175 @@ const Results = ({ formData, resetCalculator }) => {
       <div className="mt-8 bg-white p-6 rounded-lg shadow-lg">
         <h3 className="text-2xl font-bold text-green-600 mb-4">Take the Pledge!</h3>
         <div className="space-y-4">
-          <p className="text-gray-700">
-            Your commitment to reducing carbon emissions is commendable. Take it a step further by pledging to:
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-gray-700 ml-4">
-            <li>Implement the recommended interventions to reduce your carbon footprint</li>
-            <li>Offset your remaining emissions by planting {calculateRequiredTrees(currentResult?.total || 0)} trees</li>
-            <li>Track your progress and maintain sustainable practices</li>
-          </ul>
-          
-          <div className="mt-6 p-4 bg-green-50 rounded-lg">
-            <p className="text-gray-700">
-              <span className="font-semibold">Forest First Samithi</span> is our trusted offset partner. 
-              We highly recommend approaching them to help offset your carbon footprint through tree plantation.
-            </p>
-            <div className="mt-4">
-              <a 
-                href="https://forestfirstsamithi.org/contribute/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Offset with Forest First Samithi
-                <svg 
-                  className="ml-2 w-4 h-4" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
+          {pledgeAccepted ? (
+            <div className="text-center py-6 space-y-4">
+              <div className="text-green-600 text-6xl mb-4">🎉</div>
+              <h4 className="text-2xl font-bold text-green-600">Congratulations!</h4>
+              <p className="text-gray-700">
+                Thank you for pledging to reduce your carbon footprint. Your commitment to implementing
+                {selectedPledges.length === 1 
+                  ? ' this change ' 
+                  : ` these ${selectedPledges.length} changes `}
+                will help create a more sustainable future.
+              </p>
+              <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  You've committed to reducing your emissions by{' '}
+                  <span className="font-bold text-green-600">
+                    {Math.round(currentResult?.total - calculateUpdatedEmissions())} Kg CO₂e
+                  </span>{' '}
+                  annually.
+                </p>
+              </div>
+              
+              {/* Add update pledge button */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-6">
+                <button
+                  onClick={() => setPledgeAccepted(false)}
+                  className="px-6 py-3 rounded-lg font-medium text-green-600 border-2 border-green-600 hover:bg-green-50 transition-colors w-full sm:w-auto"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
-                  />
-                </svg>
-              </a>
+                  Update My Pledge
+                </button>
+                
+                <a 
+                  href="https://forestfirstsamithi.org/contribute/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors w-full sm:w-auto justify-center"
+                >
+                  Offset with Forest First Samithi
+                  <svg 
+                    className="ml-2 w-4 h-4" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
+                    />
+                  </svg>
+                </a>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <p className="text-gray-700 mb-2">Select recommendations to implement:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {generateRecommendations(formData).map((rec, index) => (
+                  <div 
+                    key={index} 
+                    className={`p-3 rounded-lg border transition-colors cursor-pointer
+                      ${selectedPledges.includes(rec.id) 
+                        ? 'border-green-500 bg-green-50' 
+                        : 'border-gray-200 hover:border-green-300'}
+                      ${rec.isTreePlanting ? 'md:col-span-2 bg-green-50/50' : ''}`}
+                    onClick={() => handlePledgeToggle(rec.id)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedPledges.includes(rec.id)}
+                        onChange={() => handlePledgeToggle(rec.id)}
+                        className="mt-1 h-4 w-4 text-green-600 rounded"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium text-gray-900">{rec.title}</h4>
+                          {rec.isTreePlanting && (
+                            <span className="text-sm font-medium text-green-600">
+                              {calculateRequiredTrees(calculateUpdatedEmissions())} trees needed
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600">{rec.description}</p>
+                        {rec.isTreePlanting && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            <p>
+                              After implementing selected changes, you'll need to plant{' '}
+                              <span className="font-medium text-green-600">
+                                {calculateRequiredTrees(calculateUpdatedEmissions())}
+                              </span>{' '}
+                              trees to offset your remaining emissions.
+                            </p>
+                            <p className="mt-1">
+                              Trees take approximately 10 years to fully offset this amount of carbon.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add back Trees Required section */}
+              <div className="mt-6 p-4 bg-green-50 rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Trees Required After Selected Changes</h4>
+                    <p className="text-sm text-gray-600">
+                      Based on your selected commitments
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold text-green-600">
+                      {calculateRequiredTrees(calculateUpdatedEmissions())}
+                    </p>
+                    <p className="text-sm text-gray-500">trees</p>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {selectedPledges.length > 0 ? (
+                    <p>
+                      By implementing your selected changes, you'll reduce the number of trees needed 
+                      from {calculateRequiredTrees(currentResult?.total || 0)} to {calculateRequiredTrees(calculateUpdatedEmissions())}.
+                    </p>
+                  ) : (
+                    <p>Select recommendations above to see how they affect your tree planting requirement.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Existing buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-6">
+                <button
+                  onClick={handlePledgeAcceptance}
+                  disabled={selectedPledges.length === 0}
+                  className={`px-6 py-3 rounded-lg font-medium text-white w-full sm:w-auto text-center
+                    ${selectedPledges.length === 0 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-green-600 hover:bg-green-700 transition-colors'}`}
+                >
+                  I Accept This Pledge
+                </button>
+                
+                <a 
+                  href="https://forestfirstsamithi.org/contribute/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors w-full sm:w-auto justify-center"
+                >
+                  Offset with Forest First Samithi
+                  <svg 
+                    className="ml-2 w-4 h-4" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
+                    />
+                  </svg>
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

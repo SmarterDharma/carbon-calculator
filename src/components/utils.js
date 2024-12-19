@@ -396,9 +396,10 @@ export const generateRecommendations = (formData) => {
   if (!formData.energy?.solarPV) {
     const monthlyUnits = formData.energy?.electricityUnits || 
       calculateUnitsFromBill(formData.energy?.electricityBill || 0, formData.personal?.pincode);
-    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4)); // 4 is the average units per day, 365 is the number of days in a year, 12 is the number of months in a year
+    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4));
     if (requiredKWP > 0) {
       recommendations.push({
+        id: 'solarPV',
         title: 'Solar Power Installation',
         description: `Installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption.`
       });
@@ -408,43 +409,59 @@ export const generateRecommendations = (formData) => {
   // Solar water heater recommendation
   if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
     recommendations.push({
+      id: 'solarWater',
       title: 'Solar Water Heating',
       description: `Installing a ${formData.energy.geysers * 100}L solar water heater could replace your electric geysers.`
     });
   }
 
-  // Commute recommendations
+  // Add IDs to other recommendations...
   if (formData.commute?.carType === 'suv') {
     recommendations.push({
+      id: 'publicTransport',
       title: 'Sustainable Transportation',
       description: 'Consider carpooling or using public transport to reduce emissions from your SUV.'
     });
   }
 
-  // Travel recommendations
   const totalFlights = 
     (formData.travel?.domesticShortFlights || 0) +
     (formData.travel?.internationalFlights || 0);
   if (totalFlights > 6) {
     recommendations.push({
+      id: 'virtualMeetings',
       title: 'Air Travel',
       description: 'Consider reducing air travel and opt for virtual meetings when possible.'
     });
   }
 
-  // Diet recommendations
   if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
     recommendations.push({
+      id: 'diet',
       title: 'Dietary Changes',
       description: 'Consider reducing meat consumption and incorporating more plant-based meals.'
     });
   }
 
-  // Composting recommendation
   if (formData.lifestyle?.compostOption === 'no') {
     recommendations.push({
+      id: 'composting',
       title: 'Waste Management',
       description: 'Start composting your wet waste to reduce methane emissions from landfills.'
+    });
+  }
+
+  // Add tree planting recommendation for remaining emissions
+  const remainingEmissions = formData.total || 0;
+  const requiredTrees = calculateRequiredTrees(remainingEmissions);
+  if (requiredTrees > 0) {
+    recommendations.push({
+      id: 'treePlanting',
+      title: 'Plant Trees to Offset Remaining Emissions',
+      description: `Plant trees to offset your remaining carbon footprint. The number of trees needed will adjust based on your other selected pledges.`,
+      isTreePlanting: true,
+      treeCount: requiredTrees,
+      remainingEmissions: remainingEmissions
     });
   }
 
@@ -481,4 +498,10 @@ export const validateNumberInput = (value, options = {}) => {
   }
   
   return numValue;
+};
+
+// Add this function to calculate savings from tree planting
+export const calculateTreePlantingSavings = (treeCount) => {
+  // Each tree absorbs approximately 22kg CO2 per year
+  return treeCount * 22;
 };
