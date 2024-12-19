@@ -1,6 +1,10 @@
-export const saveResult = async (result) => {
+import { calculateFootprints } from '../components/utils';
+
+export const saveResult = async (formData) => {
   try {
-    await fetch('http://localhost:5001/v2/carbon-calculator', {
+    const result = calculateFootprints(formData);
+
+    await fetch('https://calculess-alpha.sdplus.io/v2/carbon-calculator', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -14,7 +18,3 @@ export const saveResult = async (result) => {
     return null;
   }
 };
-
-export const clearResults = () => {
-  localStorage.removeItem('carbonFootprints');
-}; 

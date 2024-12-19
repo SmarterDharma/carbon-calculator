@@ -3,17 +3,13 @@
 import React, { useEffect, useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
-import { saveResult } from '../utils/storage';
 import {
-  calculateEnergyFootprint,
-  calculateCommuteFootprint,
-  calculateTravelFootprint,
-  calculateLifestyleFootprint,
   calculateSavingsSummary,
   calculateRequiredTrees,
   calculatePercentageDifferences,
   generateRecommendations,
-  calculateUpdatedEmissions
+  calculateUpdatedEmissions,
+  calculateFootprints
 } from './utils';
 
 // Register ChartJS components
@@ -38,46 +34,10 @@ const Results = ({ formData, resetCalculator }) => {
     }
   };
 
-  const calculateFootprints = () => {
-    const energyFootprint = calculateEnergyFootprint(formData.energy, formData.personal);
-    const commuteFootprint = calculateCommuteFootprint(formData.commute);
-    const travelFootprint = calculateTravelFootprint(formData.travel);
-    const lifestyleFootprint = calculateLifestyleFootprint(formData.lifestyle);
-
-    const totalFootprint = 
-      energyFootprint +
-      commuteFootprint +
-      travelFootprint +
-      lifestyleFootprint;
-
-    return {
-      energy: energyFootprint,
-      commute: commuteFootprint,
-      travel: travelFootprint,
-      lifestyle: lifestyleFootprint,
-      total: totalFootprint,
-      userData: {
-        name: formData.personal?.name,
-        email: formData.personal?.email,
-        household: formData.personal?.household,
-        age: formData.personal?.age,
-        gender: formData.personal?.gender,
-        pincode: formData.personal?.pincode
-      },
-      details: {
-        energy: formData.energy,
-        commute: formData.commute,
-        travel: formData.travel,
-        lifestyle: formData.lifestyle
-      }
-    };
-  };
-
   useEffect(() => {
     // Calculate and save result when component mounts
-    const result = calculateFootprints();
+    const result = calculateFootprints(formData);
     setCurrentResult(result);
-    saveResult(result);
   }, [formData]);
 
   // Chart configurations

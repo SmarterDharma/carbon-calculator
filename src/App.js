@@ -6,6 +6,7 @@ import Commute from './components/Commute';
 import Travel from './components/Travel';
 import Lifestyle from './components/Lifestyle';
 import Results from './components/Results';
+import { saveResult } from './utils/storage';
 
 function App() {
   const [activeBucket, setActiveBucket] = useState('personal');
@@ -183,6 +184,11 @@ function App() {
     });
   };
 
+  const captureResult = () => {
+    saveResult(formData);
+    handleNext();
+  };
+
   const renderNavigationButtons = () => {
     const currentIndex = bucketOrder.indexOf(activeBucket);
     const isFirst = currentIndex === 0;
@@ -202,7 +208,7 @@ function App() {
           Previous
         </button>
         <button
-          onClick={handleNext}
+          onClick={currentIndex === bucketOrder.length - 2 ? captureResult: handleNext}
           className={`px-6 py-2 rounded-md text-sm font-medium transition-colors
             ${isLast
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'

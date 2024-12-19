@@ -530,3 +530,38 @@ export const calculateUpdatedEmissions = (formData, selectedPledges, currentResu
 
     return Math.max(0, (currentResult?.total || 0) - selectedSavings);
   };
+
+export const calculateFootprints = (formData) => {
+    const energyFootprint = calculateEnergyFootprint(formData.energy, formData.personal);
+    const commuteFootprint = calculateCommuteFootprint(formData.commute);
+    const travelFootprint = calculateTravelFootprint(formData.travel);
+    const lifestyleFootprint = calculateLifestyleFootprint(formData.lifestyle);
+
+    const totalFootprint = 
+      energyFootprint +
+      commuteFootprint +
+      travelFootprint +
+      lifestyleFootprint;
+
+    return {
+      energy: energyFootprint,
+      commute: commuteFootprint,
+      travel: travelFootprint,
+      lifestyle: lifestyleFootprint,
+      total: totalFootprint,
+      userData: {
+        name: formData.personal?.name,
+        email: formData.personal?.email,
+        household: formData.personal?.household,
+        age: formData.personal?.age,
+        gender: formData.personal?.gender,
+        pincode: formData.personal?.pincode
+      },
+      details: {
+        energy: formData.energy,
+        commute: formData.commute,
+        travel: formData.travel,
+        lifestyle: formData.lifestyle
+      }
+    };
+  };
