@@ -1,7 +1,5 @@
 import React from 'react';
 
-const SLIDER_COLOR = '#4AECB7';
-
 const Navigation = ({ activeBucket, onNavigationClick }) => {
   const navItems = [
     { id: 'personal', label: 'Personal Info' },
@@ -23,11 +21,8 @@ const Navigation = ({ activeBucket, onNavigationClick }) => {
         <div className="relative pt-4">
           <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
             <div 
-              style={{ 
-                width: `${progress}%`,
-                backgroundColor: SLIDER_COLOR
-              }}
-              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"
+              style={{ width: `${progress}%` }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#4AECB7] transition-all duration-500"
             ></div>
           </div>
           {/* Step Indicators */}
@@ -41,17 +36,25 @@ const Navigation = ({ activeBucket, onNavigationClick }) => {
                 `}
                 onClick={() => onNavigationClick(item.id)}
               >
-                <div className={`
-                  w-6 h-6 rounded-full border-2 flex items-center justify-center
-                  text-xs font-semibold mb-1
-                  ${index <= currentIndex ? `border-[${SLIDER_COLOR}] bg-[${SLIDER_COLOR}] text-white` : 'border-gray-300 text-gray-300'}
-                `}>
+                <div 
+                  className={`
+                    w-6 h-6 rounded-full border-2 flex items-center justify-center
+                    text-xs font-semibold mb-1
+                    ${index <= currentIndex 
+                      ? 'border-[#4AECB7] bg-[#4AECB7] text-white' 
+                      : 'border-gray-300 text-gray-300'}
+                  `}
+                >
                   {index + 1}
                 </div>
-                <span className={`
-                  text-xs hidden md:block
-                  ${index <= currentIndex ? `text-[${SLIDER_COLOR}] font-medium` : 'text-gray-400'}
-                `}>
+                <span 
+                  className={`
+                    text-xs hidden md:block
+                    ${index <= currentIndex 
+                      ? 'text-[#4AECB7] font-medium' 
+                      : 'text-gray-400'}
+                  `}
+                >
                   {item.label}
                 </span>
               </div>

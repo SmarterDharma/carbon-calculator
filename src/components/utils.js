@@ -241,35 +241,195 @@ export const calculatePercentageDifferences = (currentTotal) => {
 
 // Add all the savings calculation functions
 export const calculateSolarPVSavings = (energyData) => {
-  // Move solar PV savings calculation here
+  if (!energyData || energyData.solarPV) return 0;
+  
+  // Calculate potential solar savings
+  const monthlyUnits = energyData.electricityUnits || 
+    (energyData.dontKnowUnits ? (energyData.electricityBill || 0) / 7.11 : 0);
+  
+  // Each kWp generates about 4.5 units per day
+  const annualUnits = monthlyUnits * 12;
+  
+  // Calculate emissions saved (kg CO2)
+  return annualUnits * ENERGY_FACTORS.ELECTRICITY;
 };
 
 export const calculateSolarWaterSavings = (energyData) => {
-  // Move solar water savings calculation here
+  if (!energyData || energyData.solarWater) return 0;
+  
+  // Each geyser uses approximately 2 kWh per day
+  const geysers = energyData.geysers || 0;
+  const dailyElectricitySaved = geysers * 2;
+  const annualElectricitySaved = dailyElectricitySaved * 365;
+  
+  // Calculate emissions saved (kg CO2)
+  return annualElectricitySaved * ENERGY_FACTORS.ELECTRICITY;
 };
 
 export const calculatePublicTransportSavings = (commuteData) => {
-  // Move public transport savings calculation here
+  if (!commuteData || !commuteData.carType) return 0;
+  
+  const distance = commuteData.fourWheelerDistance || 0;
+  let currentEmissions = 0;
+  
+  // Calculate current emissions based on car type
+  if (commuteData.carType === 'electric') {
+    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-electric'] * 260;
+  } else if (commuteData.carType === 'suv') {
+    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-suv'] * 260;
+  } else {
+    currentEmissions = distance * COMMUTE_FACTORS['four-wheeler-hatchback'] * 260;
+  }
+  
+  // Calculate emissions if using public transport
+  const publicTransportEmissions = distance * COMMUTE_FACTORS['public-transport'] * 260;
+  
+  return currentEmissions - publicTransportEmissions;
 };
 
 export const calculateElectricVehicleSavings = (commuteData) => {
-  // Move electric vehicle savings calculation here
+  if (!commuteData) return 0;
+  
+  let potentialSavings = 0;
+  
+  // Two wheeler conversion savings
+  if (commuteData.twoWheelerType === 'petrol') {
+    const distance = commuteData.twoWheelerDistance || 0;
+    const currentEmissions = distance * COMMUTE_FACTORS['two-wheeler-petrol'] * 260;
+    const electricEmissions = distance * COMMUTE_FACTORS['two-wheeler-electric'] * 260;
+    potentialSavings += currentEmissions - electricEmissions;
+  }
+  
+  // Four wheeler conversion savings
+  if (commuteData.carType === 'suv' || commuteData.carType === 'hatchback') {
+    const distance = commuteData.fourWheelerDistance || 0;
+    const currentEmissions = distance * 
+      (commuteData.carType === 'suv' ? 
+        COMMUTE_FACTORS['four-wheeler-suv'] : 
+        COMMUTE_FACTORS['four-wheeler-hatchback']) * 260;
+    const electricEmissions = distance * COMMUTE_FACTORS['four-wheeler-electric'] * 260;
+    potentialSavings += currentEmissions - electricEmissions;
+  }
+  
+  return potentialSavings;
 };
 
 export const calculateVirtualMeetingsSavings = (travelData) => {
-  // Move virtual meetings savings calculation here
+  if (!travelData) return 0;
+  
+  // Assume 20% of flights could be replaced with virtual meetings
+  const reductionFactor = 0.2;
+  
+  // Calculate current flight emissions
+  const flightEmissions = 
+    (travelData.domesticVeryShortFlights || 0) * FLIGHT_FACTORS.domesticVeryShort * 500 +
+    (travelData.domesticShortFlights || 0) * FLIGHT_FACTORS.domesticShort * 1000 +
+    (travelData.domesticMediumFlights || 0) * FLIGHT_FACTORS.domesticMedium * 1500 +
+    (travelData.domesticLongFlights || 0) * FLIGHT_FACTORS.domesticLong * 2000;
+  
+  return flightEmissions * reductionFactor;
 };
 
 export const calculateDietSavings = (lifestyleData) => {
-  // Move diet savings calculation here
+  if (!lifestyleData || lifestyleData.selectedDiet === 'vegan') return 0;
+  
+  let currentEmissions = 0;
+  let veganEmissions = 0;
+  const weeksPerYear = 52;
+  
+  if (lifestyleData.selectedDiet === 'nonVegetarian') {
+    // Calculate current non-veg emissions
+    currentEmissions = 
+      ((lifestyleData.chickenFishMeals || 0) * MEAL_FACTORS.chickenFish +
+       (lifestyleData.redMeatMeals || 0) * MEAL_FACTORS.redMeat +
+       (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian) * weeksPerYear;
+    
+    // Calculate if all meals were vegan
+    const totalMeals = (lifestyleData.chickenFishMeals || 0) +
+                      (lifestyleData.redMeatMeals || 0) +
+                      (lifestyleData.vegetarianMeals || 0);
+    veganEmissions = totalMeals * MEAL_FACTORS.plantBased * weeksPerYear;
+  } else if (lifestyleData.selectedDiet === 'vegetarian') {
+    currentEmissions = (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.vegetarian * weeksPerYear;
+    veganEmissions = (lifestyleData.vegetarianMeals || 0) * MEAL_FACTORS.plantBased * weeksPerYear;
+  }
+  
+  return currentEmissions - veganEmissions;
 };
 
 export const calculateCompostingSavings = (lifestyleData) => {
-  // Move composting savings calculation here
+  if (!lifestyleData || lifestyleData.compostOption === 'yes') return 0;
+  
+  const dailyWasteAmount = 0.2; // kg per day
+  const annualWaste = dailyWasteAmount * 365;
+  
+  // Calculate difference between landfill and composting emissions
+  const landfillEmissions = annualWaste * WASTE_FACTORS.landfilling;
+  const compostEmissions = annualWaste * WASTE_FACTORS.composting;
+  
+  return landfillEmissions - compostEmissions;
 };
 
 export const generateRecommendations = (formData) => {
-  // Move recommendations generation logic here
+  const recommendations = [];
+  
+  // Energy recommendations
+  if (!formData.energy?.solarPV) {
+    const monthlyUnits = formData.energy?.electricityUnits || 
+      (formData.energy?.dontKnowUnits ? (formData.energy?.electricityBill || 0) / 7.11 : 0);
+    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4.5));
+    if (requiredKWP > 0) {
+      recommendations.push({
+        title: 'Solar Power Installation',
+        description: `Installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption.`
+      });
+    }
+  }
+
+  // Solar water heater recommendation
+  if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
+    recommendations.push({
+      title: 'Solar Water Heating',
+      description: `Installing a ${formData.energy.geysers * 100}L solar water heater could replace your electric geysers.`
+    });
+  }
+
+  // Commute recommendations
+  if (formData.commute?.carType === 'suv') {
+    recommendations.push({
+      title: 'Sustainable Transportation',
+      description: 'Consider carpooling or using public transport to reduce emissions from your SUV.'
+    });
+  }
+
+  // Travel recommendations
+  const totalFlights = 
+    (formData.travel?.domesticShortFlights || 0) +
+    (formData.travel?.internationalFlights || 0);
+  if (totalFlights > 6) {
+    recommendations.push({
+      title: 'Air Travel',
+      description: 'Consider reducing air travel and opt for virtual meetings when possible.'
+    });
+  }
+
+  // Diet recommendations
+  if (formData.lifestyle?.selectedDiet === 'nonVegetarian') {
+    recommendations.push({
+      title: 'Dietary Changes',
+      description: 'Consider reducing meat consumption and incorporating more plant-based meals.'
+    });
+  }
+
+  // Composting recommendation
+  if (formData.lifestyle?.compostOption === 'no') {
+    recommendations.push({
+      title: 'Waste Management',
+      description: 'Start composting your wet waste to reduce methane emissions from landfills.'
+    });
+  }
+
+  return recommendations;
 };
 
 // Add this function to handle non-negative input validation
