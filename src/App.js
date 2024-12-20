@@ -31,6 +31,7 @@ function App() {
     const currentIndex = bucketOrder.indexOf(activeBucket);
     if (currentIndex < bucketOrder.length - 1 && validateCurrentSection()) {
       setActiveBucket(bucketOrder[currentIndex + 1]);
+      window.scrollTo(0, 0);
     }
   };
 
@@ -38,6 +39,7 @@ function App() {
     const currentIndex = bucketOrder.indexOf(activeBucket);
     if (currentIndex > 0) {
       setActiveBucket(bucketOrder[currentIndex - 1]);
+      window.scrollTo(0, 0);
     }
   };
 
@@ -252,6 +254,7 @@ function App() {
     // Only allow going backwards or to already validated sections
     if (targetIndex < currentIndex || isValidUpTo(targetIndex)) {
       setActiveBucket(bucket);
+      window.scrollTo(0, 0);
     }
   };
 

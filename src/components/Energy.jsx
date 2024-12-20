@@ -17,7 +17,10 @@ const Energy = ({ formData, updateFormData, pincode }) => {
 
   const toggleBillInput = () => {
     const dontKnowUnits = formData?.dontKnowUnits || false;
-    updateFormData('energy', { dontKnowUnits: !dontKnowUnits });
+    updateFormData('energy', { 
+      dontKnowUnits: !dontKnowUnits,
+      electricityUnits: !dontKnowUnits ? 0 : formData?.electricityUnits
+    });
   };
 
   const calculateUnitsDisplay = (bill) => {
@@ -39,10 +42,11 @@ const Energy = ({ formData, updateFormData, pincode }) => {
             <input
               type="number"
               name="electricityUnits"
-              value={formData?.electricityUnits || ''}
+              value={formData?.dontKnowUnits ? 0 : formData?.electricityUnits || ''}
               onChange={handleInputChange}
-              className="input-field"
+              className={`input-field ${formData?.dontKnowUnits ? 'bg-gray-100' : ''}`}
               placeholder="Enter units"
+              disabled={formData?.dontKnowUnits}
             />
           </div>
 
