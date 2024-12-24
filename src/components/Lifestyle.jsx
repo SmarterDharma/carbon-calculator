@@ -250,26 +250,32 @@ const Lifestyle = ({ formData, updateFormData }) => {
           <h3 className="text-xl font-semibold mb-4 text-left">Fashion</h3>
           <div className="space-y-4">
             <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
-              How often do you buy new clothing?
+              How many times do you shop for clothes in a year?
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { id: 'once', label: 'Once a Month' },
-                { id: 'twice', label: 'Twice a Month' },
-                { id: 'thrice', label: 'Thrice a Month' }
-              ].map(freq => (
-                <div
-                  key={freq.id}
-                  onClick={() => updateFormData('lifestyle', { fashionFrequency: freq.id })}
-                  className={`p-3 border-2 rounded-lg cursor-pointer text-center
-                    ${formData?.fashionFrequency === freq.id 
-                      ? 'border-green-500 bg-green-50' 
-                      : 'border-gray-200 hover:border-green-300'}`}
-                >
-                  {freq.label}
-                </div>
-              ))}
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                name="fashionFrequency"
+                min="0"
+                max="24"
+                step="1"
+                value={formData?.fashionFrequency || 0}
+                onChange={handleInputChange}
+                className="w-full"
+              />
+              <input
+                type="number"
+                name="fashionFrequency"
+                min="0"
+                max="24"
+                value={formData?.fashionFrequency || 0}
+                onChange={handleInputChange}
+                className="w-20 text-center input-field"
+              />
             </div>
+            <p className="text-sm text-gray-500 mt-1 text-left">
+              Average: 12 times per year (monthly shopping)
+            </p>
           </div>
         </div>
 

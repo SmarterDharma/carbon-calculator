@@ -109,25 +109,25 @@ const Commute = ({ formData, updateFormData }) => {
         {/* Work from home slider */}
         <div className="pb-4 border-b border-gray-200">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            How many days a week do you work from home?
+            How many days a week do you work from office?
           </label>
           <div className="flex items-center gap-4">
             <input
               type="range"
-              name="wfhDays"
+              name="officeWorkDays"
               min="0"
               max="7"
               step="1"
-              value={formData?.wfhDays || 0}
+              value={formData?.officeWorkDays || 0}
               onChange={handleInputChange}
               className="w-full"
             />
             <input
               type="number"
-              name="wfhDays"
+              name="officeWorkDays"
               min="0"
               max="7"
-              value={formData?.wfhDays || 0}
+              value={formData?.officeWorkDays || 0}
               onChange={handleInputChange}
               className="w-20 text-center input-field"
             />
