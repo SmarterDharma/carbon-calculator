@@ -1,29 +1,37 @@
-import React, { useState } from 'react';
-import Navigation from './components/Navigation';
-import PersonalInfo from './components/PersonalInfo';
-import Energy from './components/Energy';
-import Commute from './components/Commute';
-import Travel from './components/Travel';
-import Lifestyle from './components/Lifestyle';
-import Results from './components/Results';
-import { saveResult } from './utils/storage';
+import React, { useState } from "react";
+import Navigation from "./components/Navigation";
+import PersonalInfo from "./components/PersonalInfo";
+import Energy from "./components/Energy";
+import Commute from "./components/Commute";
+import Travel from "./components/Travel";
+import Lifestyle from "./components/Lifestyle";
+import Results from "./components/Results";
+import { saveResult } from "./utils/storage";
+import sdplusLogo from "./sdplus_logo.svg";
 
 function App() {
-  const [activeBucket, setActiveBucket] = useState('personal');
+  const [activeBucket, setActiveBucket] = useState("personal");
   const [formData, setFormData] = useState({
     personal: {},
     energy: {},
     commute: {},
     travel: {},
-    lifestyle: {}
+    lifestyle: {},
   });
 
-  const bucketOrder = ['personal', 'energy', 'commute', 'travel', 'lifestyle', 'result'];
+  const bucketOrder = [
+    "personal",
+    "energy",
+    "commute",
+    "travel",
+    "lifestyle",
+    "result",
+  ];
 
   const updateFormData = (bucket, data) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [bucket]: { ...prev[bucket], ...data }
+      [bucket]: { ...prev[bucket], ...data },
     }));
   };
 
@@ -45,15 +53,15 @@ function App() {
 
   const validateCurrentSection = () => {
     switch (activeBucket) {
-      case 'personal':
+      case "personal":
         return validatePersonalInfo();
-      case 'energy':
+      case "energy":
         return validateEnergy();
-      case 'commute':
+      case "commute":
         return validateCommute();
-      case 'travel':
+      case "travel":
         return validateTravel();
-      case 'lifestyle':
+      case "lifestyle":
         return validateLifestyle();
       default:
         return true;
@@ -61,9 +69,10 @@ function App() {
   };
 
   const validatePersonalInfo = () => {
-    const { name, email, age, gender, pincode, household } = formData.personal || {};
+    const { name, email, age, gender, pincode, household } =
+      formData.personal || {};
     if (!name || !email || !age || !gender || !pincode || !household) {
-      alert('Please fill in all required fields in Personal Information');
+      alert("Please fill in all required fields in Personal Information");
       return false;
     }
     return true;
@@ -72,23 +81,25 @@ function App() {
   const validateEnergy = () => {
     const { electricityUnits } = formData.energy || {};
     if (!electricityUnits && !formData.energy?.dontKnowUnits) {
-      alert('Please enter your electricity units or select "Don\'t know your units"');
+      alert(
+        'Please enter your electricity units or select "Don\'t know your units"'
+      );
       return false;
     }
     return true;
   };
 
   const validateCommute = () => {
-    const { 
+    const {
       walkCycleDistance,
       publicTransportDistance,
       twoWheelerDistance,
       threeWheelerDistance,
-      fourWheelerDistance 
+      fourWheelerDistance,
     } = formData.commute || {};
 
     // Check if any mode has a distance value greater than 0
-    const hasValidCommute = 
+    const hasValidCommute =
       walkCycleDistance > 0 ||
       publicTransportDistance > 0 ||
       (twoWheelerDistance > 0 && formData.commute?.twoWheelerType) ||
@@ -96,7 +107,7 @@ function App() {
       (fourWheelerDistance > 0 && formData.commute?.carType);
 
     if (!hasValidCommute) {
-      alert('Please enter travel distance for at least one mode of commute');
+      alert("Please enter travel distance for at least one mode of commute");
       return false;
     }
     return true;
@@ -128,11 +139,11 @@ function App() {
       localElectricTrips,
       shortElectricTrips,
       mediumElectricTrips,
-      longElectricTrips
+      longElectricTrips,
     } = formData.travel || {};
 
     // Check if any travel mode has trips greater than 0
-    const hasValidTravel = 
+    const hasValidTravel =
       // Domestic Flights
       domesticVeryShortFlights > 0 ||
       domesticShortFlights > 0 ||
@@ -160,7 +171,7 @@ function App() {
       longElectricTrips > 0;
 
     if (!hasValidTravel) {
-      alert('Please enter at least one trip in any travel section');
+      alert("Please enter at least one trip in any travel section");
       return false;
     }
     return true;
@@ -169,20 +180,20 @@ function App() {
   const validateLifestyle = () => {
     const { selectedDiet } = formData.lifestyle || {};
     if (!selectedDiet) {
-      alert('Please select your diet preference');
+      alert("Please select your diet preference");
       return false;
     }
     return true;
   };
 
   const resetCalculator = () => {
-    setActiveBucket('personal');
+    setActiveBucket("personal");
     setFormData({
       personal: {},
       energy: {},
       commute: {},
       travel: {},
-      lifestyle: {}
+      lifestyle: {},
     });
   };
 
@@ -201,24 +212,28 @@ function App() {
         <button
           onClick={handlePrevious}
           className={`px-6 py-2 rounded-md text-sm font-medium transition-colors
-            ${isFirst 
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ${
+              isFirst
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
             }`}
           disabled={isFirst}
         >
           Previous
         </button>
         <button
-          onClick={currentIndex === bucketOrder.length - 2 ? captureResult: handleNext}
+          onClick={
+            currentIndex === bucketOrder.length - 2 ? captureResult : handleNext
+          }
           className={`px-6 py-2 rounded-md text-sm font-medium transition-colors
-            ${isLast
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-green-500 text-white hover:bg-green-600'
+            ${
+              isLast
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-green-500 text-white hover:bg-green-600"
             }`}
           disabled={isLast}
         >
-          {currentIndex === bucketOrder.length - 2 ? 'View Results' : 'Next'}
+          {currentIndex === bucketOrder.length - 2 ? "View Results" : "Next"}
         </button>
       </div>
     );
@@ -226,18 +241,43 @@ function App() {
 
   const renderActiveBucket = () => {
     switch (activeBucket) {
-      case 'personal':
-        return <PersonalInfo formData={formData.personal} updateFormData={updateFormData} />;
-      case 'energy':
-        return <Energy formData={formData.energy} updateFormData={updateFormData} pincode={formData.personal?.pincode} />;
-      case 'commute':
-        return <Commute formData={formData.commute} updateFormData={updateFormData} />;
-      case 'travel':
-        return <Travel formData={formData.travel} updateFormData={updateFormData} />;
-      case 'lifestyle':
-        return <Lifestyle formData={formData.lifestyle} updateFormData={updateFormData} />;
-      case 'result':
-        return <Results formData={formData} resetCalculator={resetCalculator} />;
+      case "personal":
+        return (
+          <PersonalInfo
+            formData={formData.personal}
+            updateFormData={updateFormData}
+          />
+        );
+      case "energy":
+        return (
+          <Energy
+            formData={formData.energy}
+            updateFormData={updateFormData}
+            pincode={formData.personal?.pincode}
+          />
+        );
+      case "commute":
+        return (
+          <Commute
+            formData={formData.commute}
+            updateFormData={updateFormData}
+          />
+        );
+      case "travel":
+        return (
+          <Travel formData={formData.travel} updateFormData={updateFormData} />
+        );
+      case "lifestyle":
+        return (
+          <Lifestyle
+            formData={formData.lifestyle}
+            updateFormData={updateFormData}
+          />
+        );
+      case "result":
+        return (
+          <Results formData={formData} resetCalculator={resetCalculator} />
+        );
       default:
         return <PersonalInfo />;
     }
@@ -245,12 +285,12 @@ function App() {
 
   const handleNavigationClick = (bucket) => {
     // Don't allow clicking on result section directly
-    if (bucket === 'result') return;
-    
+    if (bucket === "result") return;
+
     // Get the current index and target index
     const currentIndex = bucketOrder.indexOf(activeBucket);
     const targetIndex = bucketOrder.indexOf(bucket);
-    
+
     // Only allow going backwards or to already validated sections
     if (targetIndex < currentIndex || isValidUpTo(targetIndex)) {
       setActiveBucket(bucket);
@@ -263,19 +303,19 @@ function App() {
     for (let i = 0; i < targetIndex; i++) {
       const bucket = bucketOrder[i];
       switch (bucket) {
-        case 'personal':
+        case "personal":
           if (!validatePersonalInfo()) return false;
           break;
-        case 'energy':
+        case "energy":
           if (!validateEnergy()) return false;
           break;
-        case 'commute':
+        case "commute":
           if (!validateCommute()) return false;
           break;
-        case 'travel':
+        case "travel":
           if (!validateTravel()) return false;
           break;
-        case 'lifestyle':
+        case "lifestyle":
           if (!validateLifestyle()) return false;
           break;
         default:
@@ -289,21 +329,22 @@ function App() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">Dharma Meter</h1>
+          <div className="flex items-center justify-center gap-4">
+            <img src={sdplusLogo} alt="SDplus Logo" className="h-8 md:h-10" />
+            <h1 className="text-2xl font-bold text-[#22567B]">Dharma Meter</h1>
           </div>
         </div>
       </header>
-      <Navigation 
-        activeBucket={activeBucket} 
+      <Navigation
+        activeBucket={activeBucket}
         onNavigationClick={handleNavigationClick}
       />
       <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
         {renderActiveBucket()}
-        {activeBucket !== 'result' && renderNavigationButtons()}
+        {activeBucket !== "result" && renderNavigationButtons()}
       </main>
     </div>
   );
 }
 
-export default App; 
+export default App;
