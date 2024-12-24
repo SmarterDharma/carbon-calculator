@@ -330,7 +330,14 @@ function App() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center gap-4">
-            <img src={sdplusLogo} alt="SDplus Logo" className="h-8 md:h-10" />
+            <a
+              href="https://www.sdplus.io/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img src={sdplusLogo} alt="SDplus Logo" className="h-8 md:h-10" />
+            </a>
             <h1 className="text-2xl font-bold text-[#22567B]">Dharma Meter</h1>
           </div>
         </div>
