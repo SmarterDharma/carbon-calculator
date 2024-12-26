@@ -116,7 +116,7 @@ export const calculateEnergyFootprint = (energyData, personalData) => {
     electricityUnits = 0;
   }
 
-  const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY;
+  const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY * 12;
   const lpgFootprint = (energyData.lpgCylinders || 0) * ENERGY_FACTORS.LPG;
 
   return (electricityFootprint + lpgFootprint) / personalData?.household || 1;
@@ -336,8 +336,8 @@ export const calculateRequiredTrees = (totalEmissions) => {
 
 export const calculatePercentageDifferences = (currentTotal) => {
   const yourFootprint = currentTotal || 0;
-  const indianAvg = 1600;
-  const globalAvg = 3900;
+  const indianAvg = 2100;
+  const globalAvg = 4700;
 
   return {
     indian: (((yourFootprint - indianAvg) / indianAvg) * 100).toFixed(1),
@@ -349,15 +349,16 @@ export const calculatePercentageDifferences = (currentTotal) => {
 export const calculateSolarPVSavings = (energyData) => {
   if (!energyData || energyData.solarPV) return 0;
 
-  // Calculate potential solar savings
-  const monthlyUnits =
-    energyData.electricityUnits ||
-    (energyData.dontKnowUnits ? (energyData.electricityBill || 0) / 7.11 : 0);
+  // Calculate monthly units using either:
+  // 1. Provided electricity units directly
+  // 2. Calculate from bill using the provided function
+  // 3. Default to 0 if neither is available
+  const monthlyUnits = 
+    energyData.electricityUnits || 
+    (energyData.dontKnowUnits ? calculateUnitsFromBill(energyData.electricityBill, energyData.pincode) : 0);
 
-  // Each kWp generates about 4.5 units per day
+  // Calculate annual units and emissions saved
   const annualUnits = monthlyUnits * 12;
-
-  // Calculate emissions saved (kg CO2)
   return annualUnits * ENERGY_FACTORS.ELECTRICITY;
 };
 
@@ -527,7 +528,7 @@ export const generateRecommendations = (
         formData.energy?.electricityBill || 0,
         formData.personal?.pincode
       );
-    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4));
+    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4));//4 is the average power generation per kwp 
     if (requiredKWP > 0) {
       recommendations.push({
         id: "solarPV",
@@ -640,7 +641,7 @@ export const validateNumberInput = (value, options = {}) => {
 // Add this function to calculate savings from tree planting
 export const calculateTreePlantingSavings = (treeCount) => {
   // Each tree absorbs approximately 22kg CO2 per year
-  return treeCount * 22;
+  return treeCount * 28.4;
 };
 
 export const calculateUpdatedEmissions = (

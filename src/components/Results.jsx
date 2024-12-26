@@ -282,7 +282,7 @@ const Results = ({ formData, resetCalculator }) => {
           </div>
         </div>
         <p className="text-sm text-gray-500 mt-4">
-          Trees take about 10 years to offset this amount of carbon
+          Trees take about 5 years to offset this amount of carbon
         </p>
       </div>
 
@@ -350,7 +350,7 @@ const Results = ({ formData, resetCalculator }) => {
                     </span>.
                   </p>
                   <p className="mt-1">
-                    Trees take approximately 10 years to fully offset this amount of carbon.
+                    Trees take approximately 5 years to fully offset this amount of carbon.
                   </p>
                 </div>
               )}
