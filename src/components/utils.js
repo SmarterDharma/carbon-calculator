@@ -15,68 +15,6 @@ const getRateSlabs = (pincode) => {
   return ELECTRICITY_RATES[pincodePrefix] || ELECTRICITY_RATES.default;
 };
 
-// const getEffectiveRate = (slab) => {
-//   return slab.rate + (slab.whelingCharge || 0);
-// };
-
-// const calculateUnitsForFixedCharge = (bill, rateSlabs) => {
-//   for (let i = 0; i < rateSlabs.length; i++) {
-//     const slab = rateSlabs[i];
-//     const remainingBillAfterFixedCharge = bill - slab.fixedCharge;
-//     const effectiveRate = getEffectiveRate(slab);
-//     const units = remainingBillAfterFixedCharge / effectiveRate;
-
-//     if (units > slab.maxUnits) {
-//       continue;
-//     } else {
-//       return units;
-//     }
-//   }
-//   return 0;
-// };
-
-// const calculateUnitsForSlabs = (bill, rateSlabs) => {
-//   let remainingBill = bill;
-//   let totalUnits = 0;
-
-//   for (let i = 0; i < rateSlabs.length; i++) {
-//     const currentSlab = rateSlabs[i];
-//     const previousSlab = i > 0 ? rateSlabs[i - 1].maxUnits : 0;
-//     const slabUnits = currentSlab.maxUnits - previousSlab;
-//     const effectiveRate = getEffectiveRate(currentSlab);
-
-//     if (currentSlab.maxUnits === Infinity) {
-//       totalUnits += remainingBill / effectiveRate;
-//       break;
-//     } else {
-//       const slabCost = slabUnits * effectiveRate;
-
-//       if (remainingBill >= slabCost) {
-//         totalUnits += slabUnits;
-//         remainingBill -= slabCost;
-//       } else {
-//         totalUnits += remainingBill / effectiveRate;
-//         break;
-//       }
-//     }
-//   }
-
-//   return totalUnits;
-// };
-
-// export const calculateUnitsFromBill = (bill, pincode) => {
-//   if (!bill || !pincode) return 0;
-
-//   const rateSlabs = getRateSlabs(pincode);
-//   const hasFixedCharge = rateSlabs.some((slab) => slab.fixedCharge);
-
-//   if (hasFixedCharge) {
-//     return calculateUnitsForFixedCharge(bill, rateSlabs);
-//   }
-
-//   return calculateUnitsForSlabs(bill, rateSlabs);
-// };
-
 export const calculateUnitsFromBill = (bill, pincode) => {
   if (!bill || !pincode) return 0;
   const cityTariffs = getRateSlabs(pincode);
@@ -116,7 +54,8 @@ export const calculateEnergyFootprint = (energyData, personalData) => {
     electricityUnits = 0;
   }
 
-  const electricityFootprint = electricityUnits * ENERGY_FACTORS.ELECTRICITY * 12;
+  const electricityFootprint =
+    electricityUnits * ENERGY_FACTORS.ELECTRICITY * 12;
   const lpgFootprint = (energyData.lpgCylinders || 0) * ENERGY_FACTORS.LPG;
 
   return (electricityFootprint + lpgFootprint) / personalData?.household || 1;
@@ -353,9 +292,11 @@ export const calculateSolarPVSavings = (energyData) => {
   // 1. Provided electricity units directly
   // 2. Calculate from bill using the provided function
   // 3. Default to 0 if neither is available
-  const monthlyUnits = 
-    energyData.electricityUnits || 
-    (energyData.dontKnowUnits ? calculateUnitsFromBill(energyData.electricityBill, energyData.pincode) : 0);
+  const monthlyUnits =
+    energyData.electricityUnits ||
+    (energyData.dontKnowUnits
+      ? calculateUnitsFromBill(energyData.electricityBill, energyData.pincode)
+      : 0);
 
   // Calculate annual units and emissions saved
   const annualUnits = monthlyUnits * 12;
@@ -380,11 +321,10 @@ export const calculatePublicTransportSavings = (commuteData) => {
   const distance = commuteData.fourWheelerDistance || 0;
   let currentEmissions = 0;
 
-  // Calculate working days per year
-  const wfhDays = commuteData.wfhDays || 0;
-  const workDaysPerWeek = 6;
+  // Calculate working days per year using office days directly
+  const officeDaysPerWeek = commuteData.officeWorkDays || 0;
   const weeksPerYear = 52;
-  const workingDaysPerYear = (workDaysPerWeek - wfhDays) * weeksPerYear;
+  const workingDaysPerYear = officeDaysPerWeek * weeksPerYear;
 
   // Calculate current emissions based on car type
   if (commuteData.carType === "electric") {
@@ -408,11 +348,10 @@ export const calculatePublicTransportSavings = (commuteData) => {
 export const calculateElectricVehicleSavings = (commuteData) => {
   if (!commuteData) return 0;
 
-  // Calculate working days per year
-  const wfhDays = commuteData.wfhDays || 0;
-  const workDaysPerWeek = 5;
+  // Calculate working days per year using office days directly
+  const officeDaysPerWeek = commuteData.officeWorkDays || 0;
   const weeksPerYear = 52;
-  const workingDaysPerYear = (workDaysPerWeek - wfhDays) * weeksPerYear;
+  const workingDaysPerYear = officeDaysPerWeek * weeksPerYear;
 
   let potentialSavings = 0;
 
@@ -457,10 +396,9 @@ export const calculateVirtualMeetingsSavings = (travelData) => {
     (travelData.domesticShortFlights || 0) *
       FLIGHT_FACTORS.domesticShort *
       1000 +
-    (travelData.domesticMediumFlights || 0) *
-      FLIGHT_FACTORS.domesticMedium *
-      1500 +
-    (travelData.domesticLongFlights || 0) * FLIGHT_FACTORS.domesticLong * 2000;
+    (travelData.internationalShortFlights || 0) *
+      FLIGHT_FACTORS.internationalShort *
+      3000;
 
   return flightEmissions * reductionFactor;
 };
@@ -528,7 +466,7 @@ export const generateRecommendations = (
         formData.energy?.electricityBill || 0,
         formData.personal?.pincode
       );
-    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4));//4 is the average power generation per kwp 
+    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4)); //4 is the average power generation per kwp
     if (requiredKWP > 0) {
       recommendations.push({
         id: "solarPV",
@@ -558,14 +496,15 @@ export const generateRecommendations = (
   }
 
   const totalFlights =
+    (formData.travel?.domesticVeryShortFlights || 0) +
     (formData.travel?.domesticShortFlights || 0) +
-    (formData.travel?.internationalFlights || 0);
+    (formData.travel?.internationalShortFlights || 0);
   if (totalFlights > 6) {
     recommendations.push({
       id: "virtualMeetings",
       title: "Air Travel",
       description:
-        "Consider reducing air travel and opt for virtual meetings when possible.",
+        "Consider reducing 20% of your short flights and opt for virtual meetings when possible.",
     });
   }
 
@@ -700,4 +639,23 @@ export const calculateFootprints = (formData) => {
       personal: formData.personal,
     },
   };
+};
+
+export const getRecommendationSavings = (recommendationId, formData) => {
+  switch (recommendationId) {
+    case "solarPV":
+      return calculateSolarPVSavings(formData.energy);
+    case "solarWater":
+      return calculateSolarWaterSavings(formData.energy);
+    case "publicTransport":
+      return calculatePublicTransportSavings(formData.commute);
+    case "virtualMeetings":
+      return calculateVirtualMeetingsSavings(formData.travel);
+    case "diet":
+      return calculateDietSavings(formData.lifestyle);
+    case "composting":
+      return calculateCompostingSavings(formData.lifestyle);
+    default:
+      return 0;
+  }
 };

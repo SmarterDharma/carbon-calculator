@@ -9,7 +9,8 @@ import {
   calculatePercentageDifferences,
   generateRecommendations,
   calculateUpdatedEmissions,
-  calculateFootprints
+  calculateFootprints,
+  getRecommendationSavings
 } from './utils';
 
 // Register ChartJS components
@@ -337,6 +338,21 @@ const Results = ({ formData, resetCalculator }) => {
             <div key={index} className="bg-white p-4 rounded-lg shadow">
               <h4 className="font-medium text-green-600 mb-2">{rec.title}</h4>
               <p className="text-gray-700">{rec.description}</p>
+              
+              {/* Add carbon offset information */}
+              <div className="mt-2 text-sm">
+                <span className="text-green-600 font-medium">
+                  Potential Impact: {' '}
+                  {rec.isTreePlanting ? (
+                    `${calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees will offset ${Math.round(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} kg CO₂e`
+                  ) : rec.isForestFirst ? (
+                    `Help offset ${Math.round(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} kg CO₂e through verified tree planting`
+                  ) : (
+                    `Reduce ${Math.round(getRecommendationSavings(rec.id, formData))} kg CO₂e per year`
+                  )}
+                </span>
+              </div>
+
               {rec.isTreePlanting && (
                 <div className="mt-2 text-xs text-gray-500">
                   <p>
