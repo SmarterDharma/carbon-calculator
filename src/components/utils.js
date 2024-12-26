@@ -288,19 +288,33 @@ export const calculatePercentageDifferences = (currentTotal) => {
 export const calculateSolarPVSavings = (energyData) => {
   if (!energyData || energyData.solarPV) return 0;
 
-  // Calculate monthly units using either:
-  // 1. Provided electricity units directly
-  // 2. Calculate from bill using the provided function
-  // 3. Default to 0 if neither is available
-  const monthlyUnits =
-    energyData.electricityUnits ||
-    (energyData.dontKnowUnits
-      ? calculateUnitsFromBill(energyData.electricityBill, energyData.pincode)
-      : 0);
+  // Calculate monthly units:
+  // 1. Use electricityUnits if directly provided
+  // 2. Otherwise calculate from bill if dontKnowUnits is true
+  let monthlyUnits = 0;
+
+  if (energyData.electricityUnits) {
+    monthlyUnits = energyData.electricityUnits;
+  } else if (energyData.dontKnowUnits && energyData.electricityBill) {
+    // Try to get pincode from either energy data or personal data
+    const pincode = energyData.pincode || energyData.personalPincode;
+    if (pincode) {
+      monthlyUnits = calculateUnitsFromBill(energyData.electricityBill, pincode);
+    }
+  }
 
   // Calculate annual units and emissions saved
   const annualUnits = monthlyUnits * 12;
-  return annualUnits * ENERGY_FACTORS.ELECTRICITY;
+  const savings = annualUnits * ENERGY_FACTORS.ELECTRICITY;
+
+  console.log('Solar PV Savings Calculation:', {
+    monthlyUnits,
+    annualUnits,
+    savings,
+    energyData
+  });
+
+  return savings;
 };
 
 export const calculateSolarWaterSavings = (energyData) => {
@@ -460,18 +474,27 @@ export const generateRecommendations = (
 
   // Energy recommendations
   if (!formData.energy?.solarPV) {
-    const monthlyUnits =
-      formData.energy?.electricityUnits ||
-      calculateUnitsFromBill(
-        formData.energy?.electricityBill || 0,
-        formData.personal?.pincode
-      );
-    const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4)); //4 is the average power generation per kwp
-    if (requiredKWP > 0) {
+    const energyDataWithPincode = {
+      ...formData.energy,
+      personalPincode: formData.personal?.pincode
+    };
+    
+    const monthlyUnits = energyDataWithPincode.electricityUnits || 
+      (energyDataWithPincode.dontKnowUnits && energyDataWithPincode.electricityBill ? 
+        calculateUnitsFromBill(
+          energyDataWithPincode.electricityBill,
+          energyDataWithPincode.pincode || energyDataWithPincode.personalPincode
+        ) : 
+        0);
+
+    if (monthlyUnits > 0) {
+      const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4)); //4 is the average power generation per kwp
+      const potentialSavings = calculateSolarPVSavings(energyDataWithPincode);
+      
       recommendations.push({
         id: "solarPV",
         title: "Solar Power Installation",
-        description: `Installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption.`,
+        description: `Installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption and save ${Math.round(potentialSavings)} kg CO₂e per year.`,
       });
     }
   }
@@ -500,11 +523,12 @@ export const generateRecommendations = (
     (formData.travel?.domesticShortFlights || 0) +
     (formData.travel?.internationalShortFlights || 0);
   if (totalFlights > 6) {
+    const reducibleFlights = Math.ceil(totalFlights * 0.2); // Calculate 20% of total flights
     recommendations.push({
       id: "virtualMeetings",
       title: "Air Travel",
       description:
-        "Consider reducing 20% of your short flights and opt for virtual meetings when possible.",
+        `Consider replacing ${reducibleFlights} of your ${totalFlights} short flights with virtual meetings when possible.`,
     });
   }
 
@@ -644,7 +668,12 @@ export const calculateFootprints = (formData) => {
 export const getRecommendationSavings = (recommendationId, formData) => {
   switch (recommendationId) {
     case "solarPV":
-      return calculateSolarPVSavings(formData.energy);
+      // Pass personal pincode to energy data
+      const energyDataWithPincode = {
+        ...formData.energy,
+        personalPincode: formData.personal?.pincode
+      };
+      return calculateSolarPVSavings(energyDataWithPincode);
     case "solarWater":
       return calculateSolarWaterSavings(formData.energy);
     case "publicTransport":
