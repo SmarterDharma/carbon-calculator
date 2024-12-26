@@ -690,14 +690,7 @@ export const calculateFootprints = (formData) => {
     travel: travelFootprint,
     lifestyle: lifestyleFootprint,
     total: totalFootprint,
-    userData: {
-      name: formData.personal?.name,
-      email: formData.personal?.email,
-      household: formData.personal?.household,
-      age: formData.personal?.age,
-      gender: formData.personal?.gender,
-      pincode: formData.personal?.pincode,
-    },
+    userData: { ...formData.personal },
     details: {
       energy: formData.energy,
       commute: formData.commute,

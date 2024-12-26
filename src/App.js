@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navigation from "./components/Navigation";
 import PersonalInfo from "./components/PersonalInfo";
 import Energy from "./components/Energy";
@@ -18,6 +18,23 @@ function App() {
     travel: {},
     lifestyle: {},
   });
+
+  useEffect(() => {
+    // Get company from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const company = urlParams.get("company");
+
+    if (company) {
+      // Update form data with company without showing it
+      setFormData((prev) => ({
+        ...prev,
+        personal: {
+          ...prev.personal,
+          company,
+        },
+      }));
+    }
+  }, []); // Empty dependency array means this runs once on mount
 
   const bucketOrder = [
     "personal",
