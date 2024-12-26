@@ -26,7 +26,7 @@ const Energy = ({ formData, updateFormData, pincode }) => {
   const calculateUnitsDisplay = (bill) => {
     if (!bill) return '';
     const units = calculateUnitsFromBill(bill, pincode);
-    return units.toFixed(2);
+    return units;
   };
 
   return (

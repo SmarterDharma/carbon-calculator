@@ -16,7 +16,7 @@ const getRateSlabs = (pincode) => {
 };
 
 // const getEffectiveRate = (slab) => {
-//   return slab.rate + (slab.whelingChargePerUnit || 0);
+//   return slab.rate + (slab.whelingCharge || 0);
 // };
 
 // const calculateUnitsForFixedCharge = (bill, rateSlabs) => {
@@ -82,9 +82,8 @@ export const calculateUnitsFromBill = (bill, pincode) => {
   const cityTariffs = getRateSlabs(pincode);
 
   for (let i = 0; i < cityTariffs.length; i++) {
-    const { maxUnits, fixedCharge, rate, whelingChargePerUnit } =
-      cityTariffs[i];
-    const perUnitCost = rate + whelingChargePerUnit;
+    const { maxUnits, fixedCharge, rate, whelingCharge } = cityTariffs[i];
+    const perUnitCost = rate + whelingCharge;
 
     // Check if the given bill fit in the current slab
     if (fixedCharge < bill) {
