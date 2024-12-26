@@ -696,6 +696,7 @@ export const calculateFootprints = (formData) => {
       commute: formData.commute,
       travel: formData.travel,
       lifestyle: formData.lifestyle,
+      personal: formData.personal,
     },
   };
 };
