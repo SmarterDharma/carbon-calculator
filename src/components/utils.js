@@ -323,7 +323,7 @@ export const calculateSolarWaterSavings = (energyData) => {
   // Each geyser uses approximately 2 kWh per day
   const geysers = energyData.geysers || 0;
   const dailyElectricitySaved = geysers * 2;
-  const annualElectricitySaved = dailyElectricitySaved * 365;
+  const annualElectricitySaved = dailyElectricitySaved * 182;// considering 3-4 uses of geyser in a week
 
   // Calculate emissions saved (kg CO2)
   return annualElectricitySaved * ENERGY_FACTORS.ELECTRICITY;
