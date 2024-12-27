@@ -485,19 +485,23 @@ const Results = ({ formData, resetCalculator }) => {
                 {generateRecommendations(formData, selectedPledges, currentResult).map((rec, index) => (
                   <div 
                     key={index} 
+                    onClick={() => handlePledgeToggle(rec.id)}
                     className={`p-3 rounded-lg border transition-colors cursor-pointer
                       ${selectedPledges.includes(rec.id) 
                         ? 'border-green-500 bg-green-50' 
                         : 'border-gray-200 hover:border-green-300'}
                       ${(rec.isTreePlanting || rec.isForestFirst) ? 'bg-green-50/50' : ''}`}
-                    onClick={() => handlePledgeToggle(rec.id)}
                   >
                     <div className="flex items-start gap-2">
                       <input
                         type="checkbox"
                         checked={selectedPledges.includes(rec.id)}
-                        onChange={() => handlePledgeToggle(rec.id)}
-                        className="mt-1 h-4 w-4 text-green-600 rounded"
+                        onChange={(e) => {
+                          e.stopPropagation(); // Prevent double-triggering
+                          handlePledgeToggle(rec.id);
+                        }}
+                        onClick={(e) => e.stopPropagation()} // Prevent double-triggering
+                        className="mt-1 h-4 w-4 text-green-600 rounded cursor-pointer"
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">

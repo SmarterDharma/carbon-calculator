@@ -494,17 +494,31 @@ export const generateRecommendations = (
       recommendations.push({
         id: "solarPV",
         title: "Solar Power Installation",
-        description: `Installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption and save ${Math.round(potentialSavings)} kg CO₂e per year.`,
+        description: `If you have access to a rooftop, installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption and save ${Math.round(potentialSavings)} kg CO₂e per year.`,
       });
     }
   }
 
   // Solar water heater recommendation
   if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
+    const household = formData.personal?.household || 1;
+    let recommendedCapacity;
+    
+    if (household <= 4) {
+      recommendedCapacity = 100;
+    } else if (household <= 6) {
+      recommendedCapacity = 150;
+    } else {
+      // For every 2 additional people, add 50L
+      const additionalPeople = household - 6;
+      const additionalCapacity = Math.ceil(additionalPeople / 2) * 50;
+      recommendedCapacity = 150 + additionalCapacity;
+    }
+
     recommendations.push({
       id: "solarWater",
       title: "Solar Water Heating",
-      description: `Installing a ${formData.energy.geysers * 100}L solar water heater could replace your electric geysers.`,
+      description: `If you have access to a rooftop, installing a ${recommendedCapacity}L solar water heater could replace your electric geysers.`,
     });
   }
 
