@@ -108,12 +108,18 @@ function App() {
 
   const validateCommute = () => {
     const {
+      officeWorkDays,
       walkCycleDistance,
       publicTransportDistance,
       twoWheelerDistance,
       threeWheelerDistance,
       fourWheelerDistance,
     } = formData.commute || {};
+
+    if (!officeWorkDays || officeWorkDays < 1) {
+      alert("Please specify at least 1 day of office work per week");
+      return false;
+    }
 
     // Check if any mode has a distance value greater than 0
     const hasValidCommute =

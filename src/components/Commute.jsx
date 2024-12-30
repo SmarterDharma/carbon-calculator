@@ -109,7 +109,7 @@ const Commute = ({ formData, updateFormData }) => {
         {/* Work from home slider */}
         <div className="pb-4 border-b border-gray-200">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            How many days a week do you work from office?
+            How many days a week do you commute regularly?
           </label>
           <div className="flex items-center gap-4">
             <input
