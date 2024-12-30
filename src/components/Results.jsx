@@ -87,11 +87,11 @@ const Results = ({ formData, resetCalculator }) => {
   const barChartData = {
     labels: ['Your Footprint', 'Indian Average', 'Global Average'],
     datasets: [{
-      label: 'Your Footprint (Kg CO₂e)',
+      label: 'Carbon Footprint (Tons CO₂e)',
       data: [
-        currentResult?.total || 0,
-        1600,
-        3900
+        (currentResult?.total || 0) / 1000,  // Convert kg to tons
+        1.6,  // Indian average in tons
+        3.9   // Global average in tons
       ],
       backgroundColor: chartColors.backgroundColor.slice(1, 4).reverse(),
       borderColor: chartColors.borderColor.slice(1, 4).reverse(),
@@ -163,37 +163,29 @@ const Results = ({ formData, resetCalculator }) => {
   };
 
   const barChartOptions = {
-    indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Tons CO₂e per year'
+        }
+      }
+    },
     plugins: {
       legend: {
         display: false
       },
-      title: {
-        display: false
-      },
       tooltip: {
-        enabled: false
-      }
-    },
-    scales: {
-      x: {
-        beginAtZero: true,
-        title: {
-          display: false,
-          text: 'Carbon Footprint (Kg CO₂e)'
-        },
-        grid: {
-          display: false
-        }
-      },
-      y: {
-        grid: {
-          display: false
+        callbacks: {
+          label: function(context) {
+            return `${context.parsed.y.toFixed(2)} tons CO₂e`;
+          }
         }
       }
-    },
+    }
   };
 
   const savingsChartOptions = {
@@ -269,8 +261,8 @@ const Results = ({ formData, resetCalculator }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="border-r border-gray-200">
             <h3 className="text-4xl font-bold text-green-600 flex items-baseline justify-center">
-              {Math.round(currentResult?.total)}
-              <span className="text-2xl text-gray-500 ml-2">Kg CO₂e</span>
+              {(currentResult?.total / 1000).toFixed(2)}
+              <span className="text-2xl text-gray-500 ml-2">Tons CO₂e</span>
             </h3>
             <p className="text-xl text-gray-600 mt-2">Annual Carbon Footprint</p>
           </div>
@@ -341,11 +333,11 @@ const Results = ({ formData, resetCalculator }) => {
                 <span className="text-green-600 font-medium">
                   Potential Impact: {' '}
                   {rec.isTreePlanting ? (
-                    `${calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees will offset ${Math.round(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} kg CO₂e`
+                    `${calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees will offset ${(calculateUpdatedEmissions(formData, selectedPledges, currentResult) / 1000).toFixed(2)} tons CO₂e`
                   ) : rec.isForestFirst ? (
-                    `Help offset ${Math.round(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} kg CO₂e through verified tree planting`
+                    `Help offset ${(calculateUpdatedEmissions(formData, selectedPledges, currentResult) / 1000).toFixed(2)} tons CO₂e through verified tree planting`
                   ) : (
-                    `Reduce ${Math.round(getRecommendationSavings(rec.id, formData))} kg CO₂e per year`
+                    `Reduce ${(getRecommendationSavings(rec.id, formData) / 1000).toFixed(2)} tons CO₂e per year`
                   )}
                 </span>
               </div>
@@ -419,7 +411,10 @@ const Results = ({ formData, resetCalculator }) => {
                 <p className="text-sm text-gray-600">
                   You've committed to reducing your emissions by{' '}
                   <span className="font-bold text-green-600">
-                    {selectedPledges.includes("treePlanting") ? Math.round(currentResult?.total) : Math.round(currentResult?.total - calculateUpdatedEmissions(formData, selectedPledges, currentResult))} Kg CO₂e
+                    {((selectedPledges.includes("treePlanting") 
+                      ? currentResult?.total 
+                      : currentResult?.total - calculateUpdatedEmissions(formData, selectedPledges, currentResult)
+                    ) / 1000).toFixed(2)} tons CO₂e
                   </span>{' '}
                   annually.
                 </p>
@@ -495,22 +490,11 @@ const Results = ({ formData, resetCalculator }) => {
                         <p className="text-xs text-green-600 font-medium mt-2">
                           Potential Impact: {' '}
                           {rec.isTreePlanting ? (
-                            `${calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees needed`
+                            `${calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees needed to offset your remaining emissions.`
                           ) : (
-                            `Reduce ${Math.round(getRecommendationSavings(rec.id, formData))} kg CO₂e per year`
+                            `Reduce ${(getRecommendationSavings(rec.id, formData) / 1000).toFixed(2)} tons CO₂e per year`
                           )}
                         </p>
-                        {rec.isTreePlanting && (
-                          <div className="mt-2 text-xs text-gray-500">
-                            <p>
-                              After implementing selected changes, you'll need to plant{' '}
-                              <span className="font-medium text-green-600">
-                                {calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))}
-                              </span>{' '}
-                              trees to offset your remaining emissions.
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

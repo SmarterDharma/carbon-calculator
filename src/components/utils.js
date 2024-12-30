@@ -245,7 +245,10 @@ export const calculateLifestyleFootprint = (lifestyleData) => {
 export const calculateSavingsSummary = (formData, currentResult) => {
   const summary = {
     energy: {
-      solarPV: calculateSolarPVSavings(formData.energy),
+      solarPV: calculateSolarPVSavings(
+        formData.energy,
+        formData.personal?.pincode
+      ),
       solarWater: calculateSolarWaterSavings(formData.energy),
     },
     commute: {
@@ -274,9 +277,9 @@ export const calculateRequiredTrees = (totalEmissions) => {
 };
 
 export const calculatePercentageDifferences = (currentTotal) => {
-  const yourFootprint = currentTotal || 0;
-  const indianAvg = 2100;
-  const globalAvg = 4700;
+  const yourFootprint = (currentTotal || 0) / 1000;
+  const indianAvg = 1.6;
+  const globalAvg = 3.9;
 
   return {
     indian: (((yourFootprint - indianAvg) / indianAvg) * 100).toFixed(1),
@@ -285,7 +288,7 @@ export const calculatePercentageDifferences = (currentTotal) => {
 };
 
 // Add all the savings calculation functions
-export const calculateSolarPVSavings = (energyData) => {
+export const calculateSolarPVSavings = (energyData, pincode) => {
   if (!energyData || energyData.solarPV) return 0;
 
   // Calculate monthly units:
@@ -297,7 +300,6 @@ export const calculateSolarPVSavings = (energyData) => {
     monthlyUnits = energyData.electricityUnits;
   } else if (energyData.dontKnowUnits && energyData.electricityBill) {
     // Try to get pincode from either energy data or personal data
-    const pincode = energyData.pincode || energyData.personalPincode;
     if (pincode) {
       monthlyUnits = calculateUnitsFromBill(
         energyData.electricityBill,
@@ -646,10 +648,17 @@ export const calculateUpdatedEmissions = (
   selectedPledges,
   currentResult
 ) => {
+  console.log("🚀 ~ selectedPledges:", selectedPledges);
   const selectedSavings = selectedPledges.reduce((total, pledge) => {
     switch (pledge) {
       case "solarPV":
-        return total + (calculateSolarPVSavings(formData.energy) || 0);
+        return (
+          total +
+          (calculateSolarPVSavings(
+            formData.energy,
+            formData.personal?.pincode
+          ) || 0)
+        );
       case "solarWater":
         return total + (calculateSolarWaterSavings(formData.energy) || 0);
       case "publicTransport":
@@ -702,12 +711,10 @@ export const calculateFootprints = (formData) => {
 export const getRecommendationSavings = (recommendationId, formData) => {
   switch (recommendationId) {
     case "solarPV":
-      // Pass personal pincode to energy data
-      const energyDataWithPincode = {
-        ...formData.energy,
-        personalPincode: formData.personal?.pincode,
-      };
-      return calculateSolarPVSavings(energyDataWithPincode);
+      return calculateSolarPVSavings(
+        formData.energy,
+        formData.personal?.pincode
+      );
     case "solarWater":
       return calculateSolarWaterSavings(formData.energy);
     case "publicTransport":
