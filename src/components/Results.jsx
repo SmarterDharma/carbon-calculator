@@ -282,9 +282,6 @@ const Results = ({ formData, resetCalculator }) => {
             <p className="text-xl text-gray-600 mt-2">Required to Offset</p>
           </div>
         </div>
-        <p className="text-sm text-gray-500 mt-4">
-          Trees take about 5 years to offset this amount of carbon
-        </p>
       </div>
 
       {/* Charts */}
@@ -339,7 +336,7 @@ const Results = ({ formData, resetCalculator }) => {
               <h4 className="font-medium text-green-600 mb-2">{rec.title}</h4>
               <p className="text-gray-700">{rec.description}</p>
               
-              {/* Add carbon offset information */}
+              {/* Carbon offset information */}
               <div className="mt-2 text-sm">
                 <span className="text-green-600 font-medium">
                   Potential Impact: {' '}
@@ -352,24 +349,6 @@ const Results = ({ formData, resetCalculator }) => {
                   )}
                 </span>
               </div>
-
-              {rec.isTreePlanting && (
-                <div className="mt-2 text-xs text-gray-500">
-                  <p>
-                    After implementing other selected pledges, you'll need to plant{' '}
-                    <span className="font-medium text-green-600">
-                      {calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))}
-                    </span>{' '}
-                    trees to offset your remaining emissions of{' '}
-                    <span className="font-medium text-green-600">
-                      {Math.round(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} Kg CO₂e
-                    </span>.
-                  </p>
-                  <p className="mt-1">
-                    Trees take approximately 5 years to fully offset this amount of carbon.
-                  </p>
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -440,7 +419,7 @@ const Results = ({ formData, resetCalculator }) => {
                 <p className="text-sm text-gray-600">
                   You've committed to reducing your emissions by{' '}
                   <span className="font-bold text-green-600">
-                    {Math.round(currentResult?.total - calculateUpdatedEmissions(formData, selectedPledges, currentResult))} Kg CO₂e
+                    {selectedPledges.includes("treePlanting") ? Math.round(currentResult?.total) : Math.round(currentResult?.total - calculateUpdatedEmissions(formData, selectedPledges, currentResult))} Kg CO₂e
                   </span>{' '}
                   annually.
                 </p>
@@ -486,33 +465,41 @@ const Results = ({ formData, resetCalculator }) => {
                   <div 
                     key={index} 
                     onClick={() => handlePledgeToggle(rec.id)}
-                    className={`p-3 rounded-lg border transition-colors cursor-pointer
+                    className={`p-4 rounded-lg border transition-colors cursor-pointer
                       ${selectedPledges.includes(rec.id) 
                         ? 'border-green-500 bg-green-50' 
                         : 'border-gray-200 hover:border-green-300'}
                       ${(rec.isTreePlanting || rec.isForestFirst) ? 'bg-green-50/50' : ''}`}
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-3">
                       <input
                         type="checkbox"
                         checked={selectedPledges.includes(rec.id)}
                         onChange={(e) => {
-                          e.stopPropagation(); // Prevent double-triggering
+                          e.stopPropagation();
                           handlePledgeToggle(rec.id);
                         }}
-                        onClick={(e) => e.stopPropagation()} // Prevent double-triggering
+                        onClick={(e) => e.stopPropagation()}
                         className="mt-1 h-4 w-4 text-green-600 rounded cursor-pointer"
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium text-gray-900">{rec.title}</h4>
-                          {(rec.isTreePlanting || rec.isForestFirst) && (
-                            <span className="text-sm font-medium text-green-600">
-                              {calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees needed
+                          {rec.cost && (
+                            <span className={`text-sm font-medium ${rec.isAdditionalExpense ? 'text-red-600' : 'text-green-600'}`}>
+                              {rec.cost}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-600">{rec.description}</p>
+                        <p className="text-xs text-gray-600 mt-1">{rec.description}</p>
+                        <p className="text-xs text-green-600 font-medium mt-2">
+                          Potential Impact: {' '}
+                          {rec.isTreePlanting ? (
+                            `${calculateRequiredTrees(calculateUpdatedEmissions(formData, selectedPledges, currentResult))} trees needed`
+                          ) : (
+                            `Reduce ${Math.round(getRecommendationSavings(rec.id, formData))} kg CO₂e per year`
+                          )}
+                        </p>
                         {rec.isTreePlanting && (
                           <div className="mt-2 text-xs text-gray-500">
                             <p>
@@ -522,34 +509,6 @@ const Results = ({ formData, resetCalculator }) => {
                               </span>{' '}
                               trees to offset your remaining emissions.
                             </p>
-                            <p className="mt-1">
-                              Trees take approximately 10 years to fully offset this amount of carbon.
-                            </p>
-                          </div>
-                        )}
-                        {rec.isForestFirst && (
-                          <div className="mt-2">
-                            <a 
-                              href={rec.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center text-xs text-green-600 hover:text-green-700"
-                            >
-                              Learn more about Forest First Samithi
-                              <svg 
-                                className="ml-1 w-3 h-3" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                              >
-                                <path 
-                                  strokeLinecap="round" 
-                                  strokeLinejoin="round" 
-                                  strokeWidth={2} 
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
-                                />
-                              </svg>
-                            </a>
                           </div>
                         )}
                       </div>
@@ -558,9 +517,6 @@ const Results = ({ formData, resetCalculator }) => {
                 ))}
               </div>
 
-              
-
-              {/* Existing buttons */}
               <div className="flex justify-center mt-6">
                 <button
                   onClick={handlePledgeAcceptance}

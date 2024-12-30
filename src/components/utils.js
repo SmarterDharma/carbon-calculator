@@ -299,20 +299,16 @@ export const calculateSolarPVSavings = (energyData) => {
     // Try to get pincode from either energy data or personal data
     const pincode = energyData.pincode || energyData.personalPincode;
     if (pincode) {
-      monthlyUnits = calculateUnitsFromBill(energyData.electricityBill, pincode);
+      monthlyUnits = calculateUnitsFromBill(
+        energyData.electricityBill,
+        pincode
+      );
     }
   }
 
   // Calculate annual units and emissions saved
   const annualUnits = monthlyUnits * 12;
   const savings = annualUnits * ENERGY_FACTORS.ELECTRICITY;
-
-  console.log('Solar PV Savings Calculation:', {
-    monthlyUnits,
-    annualUnits,
-    savings,
-    energyData
-  });
 
   return savings;
 };
@@ -323,7 +319,7 @@ export const calculateSolarWaterSavings = (energyData) => {
   // Each geyser uses approximately 2 kWh per day
   const geysers = energyData.geysers || 0;
   const dailyElectricitySaved = geysers * 2;
-  const annualElectricitySaved = dailyElectricitySaved * 182;// considering 3-4 uses of geyser in a week
+  const annualElectricitySaved = dailyElectricitySaved * 182; // considering 3-4 uses of geyser in a week
 
   // Calculate emissions saved (kg CO2)
   return annualElectricitySaved * ENERGY_FACTORS.ELECTRICITY;
@@ -476,25 +472,31 @@ export const generateRecommendations = (
   if (!formData.energy?.solarPV) {
     const energyDataWithPincode = {
       ...formData.energy,
-      personalPincode: formData.personal?.pincode
+      personalPincode: formData.personal?.pincode,
     };
-    
-    const monthlyUnits = energyDataWithPincode.electricityUnits || 
-      (energyDataWithPincode.dontKnowUnits && energyDataWithPincode.electricityBill ? 
-        calculateUnitsFromBill(
-          energyDataWithPincode.electricityBill,
-          energyDataWithPincode.pincode || energyDataWithPincode.personalPincode
-        ) : 
-        0);
+
+    const monthlyUnits =
+      energyDataWithPincode.electricityUnits ||
+      (energyDataWithPincode.dontKnowUnits &&
+      energyDataWithPincode.electricityBill
+        ? calculateUnitsFromBill(
+            energyDataWithPincode.electricityBill,
+            energyDataWithPincode.pincode ||
+              energyDataWithPincode.personalPincode
+          )
+        : 0);
 
     if (monthlyUnits > 0) {
-      const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4)); //4 is the average power generation per kwp
-      const potentialSavings = calculateSolarPVSavings(energyDataWithPincode);
-      
+      const requiredKWP = Math.ceil((monthlyUnits * 12) / (365 * 4));
+      const minCost = requiredKWP * 50000;
+      const maxCost = requiredKWP * 70000;
+
       recommendations.push({
         id: "solarPV",
         title: "Solar Power Installation",
-        description: `If you have access to a rooftop, installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption and save ${Math.round(potentialSavings)} kg CO₂e per year.`,
+        description: `If you have access to a rooftop, installing a ${requiredKWP} kWp solar system could offset your entire electricity consumption`,
+        cost: `Installation cost: ₹${(minCost / 1000).toFixed(0)}-${(maxCost / 1000).toFixed(0)}K`,
+        isAdditionalExpense: true,
       });
     }
   }
@@ -503,32 +505,49 @@ export const generateRecommendations = (
   if (!formData.energy?.solarWater && formData.energy?.geysers > 0) {
     const household = formData.personal?.household || 1;
     let recommendedCapacity;
-    
+
     if (household <= 4) {
       recommendedCapacity = 100;
     } else if (household <= 6) {
       recommendedCapacity = 150;
     } else {
-      // For every 2 additional people, add 50L
       const additionalPeople = household - 6;
       const additionalCapacity = Math.ceil(additionalPeople / 2) * 50;
       recommendedCapacity = 150 + additionalCapacity;
     }
 
+    const baseCost = 20000;
+    const additionalCost = Math.max(0, (recommendedCapacity - 100) / 50) * 5000;
+    const totalCost = baseCost + additionalCost;
+
     recommendations.push({
       id: "solarWater",
       title: "Solar Water Heating",
       description: `If you have access to a rooftop, installing a ${recommendedCapacity}L solar water heater could replace your electric geysers.`,
+      cost: `Installation cost: ₹${(totalCost / 1000).toFixed(0)}K`,
+      isAdditionalExpense: true,
     });
   }
 
-  // Add IDs to other recommendations...
+  // Public transport recommendation
   if (formData.commute?.carType === "suv") {
+    const distance = formData.commute?.fourWheelerDistance || 0;
+    const suvCostPerDay = distance * 8;
+    const busCostPerDay = distance * 1.5;
+    const metroCostPerDay = distance * 2;
+    const annualSuvCost = suvCostPerDay * 250; // Assuming 250 working days
+    const annualBusCost = busCostPerDay * 250;
+    const annualMetroCost = metroCostPerDay * 250;
+    const annualSavings =
+      annualSuvCost - Math.min(annualBusCost, annualMetroCost);
+
     recommendations.push({
       id: "publicTransport",
       title: "Sustainable Transportation",
       description:
         "Consider carpooling or using public transport to reduce emissions from your SUV.",
+      cost: `Potential annual savings: ₹${(annualSavings / 1000).toFixed(0)}K`,
+      isAdditionalExpense: false,
     });
   }
 
@@ -541,8 +560,7 @@ export const generateRecommendations = (
     recommendations.push({
       id: "virtualMeetings",
       title: "Air Travel",
-      description:
-        `Consider replacing ${reducibleFlights} of your ${totalFlights} short flights with virtual meetings when possible.`,
+      description: `Consider replacing ${reducibleFlights} of your ${totalFlights} short flights with virtual meetings when possible.`,
     });
   }
 
@@ -561,6 +579,8 @@ export const generateRecommendations = (
       title: "Waste Management",
       description:
         "Start composting your wet waste to reduce methane emissions from landfills.",
+      cost: "Setup cost: ₹2-5K",
+      isAdditionalExpense: true,
     });
   }
 
@@ -685,7 +705,7 @@ export const getRecommendationSavings = (recommendationId, formData) => {
       // Pass personal pincode to energy data
       const energyDataWithPincode = {
         ...formData.energy,
-        personalPincode: formData.personal?.pincode
+        personalPincode: formData.personal?.pincode,
       };
       return calculateSolarPVSavings(energyDataWithPincode);
     case "solarWater":
