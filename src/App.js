@@ -7,7 +7,7 @@ import Travel from "./components/Travel";
 import Lifestyle from "./components/Lifestyle";
 import Results from "./components/Results";
 import { saveResult } from "./utils/storage";
-import sdplusLogo from "./sdplus_logo.svg";
+import logo from "./sd_logo.svg";
 
 function App() {
   const [activeBucket, setActiveBucket] = useState("personal");
@@ -352,16 +352,18 @@ function App() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center relative">
             <a
-              href="https://www.sdplus.io/"
+              href="https://www.smarterdharma.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:opacity-80 transition-opacity"
             >
-              <img src={sdplusLogo} alt="SDplus Logo" className="h-8 md:h-10" />
+              <img src={logo} alt="SDplus Logo" className="h-8 md:h-10" />
             </a>
-            <h1 className="text-2xl font-bold text-[#22567B]">Dharma Meter</h1>
+            <h1 className="text-2xl font-bold text-[#22567B] absolute left-1/2 -translate-x-1/2">
+              Dharma Meter
+            </h1>
           </div>
         </div>
       </header>
