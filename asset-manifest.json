@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/carbon-calculator/static/css/main.9ab47bdd.css",
-    "main.js": "/carbon-calculator/static/js/main.9c4a958b.js",
+    "main.css": "/carbon-calculator/static/css/main.407be76c.css",
+    "main.js": "/carbon-calculator/static/js/main.d5d9675c.js",
     "static/js/453.7db35f54.chunk.js": "/carbon-calculator/static/js/453.7db35f54.chunk.js",
-    "static/media/sdplus_logo.svg": "/carbon-calculator/static/media/sdplus_logo.7f44ec918806c6825ee9b51500467371.svg",
+    "static/media/sd_logo.svg": "/carbon-calculator/static/media/sd_logo.ffa807f918ff81a4096925c3af8b06ca.svg",
     "index.html": "/carbon-calculator/index.html",
-    "main.9ab47bdd.css.map": "/carbon-calculator/static/css/main.9ab47bdd.css.map",
-    "main.9c4a958b.js.map": "/carbon-calculator/static/js/main.9c4a958b.js.map",
+    "main.407be76c.css.map": "/carbon-calculator/static/css/main.407be76c.css.map",
+    "main.d5d9675c.js.map": "/carbon-calculator/static/js/main.d5d9675c.js.map",
     "453.7db35f54.chunk.js.map": "/carbon-calculator/static/js/453.7db35f54.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9ab47bdd.css",
-    "static/js/main.9c4a958b.js"
+    "static/css/main.407be76c.css",
+    "static/js/main.d5d9675c.js"
   ]
 }
