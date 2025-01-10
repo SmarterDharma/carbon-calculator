@@ -278,8 +278,8 @@ export const calculateRequiredTrees = (totalEmissions) => {
 
 export const calculatePercentageDifferences = (currentTotal) => {
   const yourFootprint = (currentTotal || 0) / 1000;
-  const indianAvg = 1.6;
-  const globalAvg = 3.9;
+  const indianAvg = 2.1;
+  const globalAvg = 4.7;
 
   return {
     indian: (((yourFootprint - indianAvg) / indianAvg) * 100).toFixed(1),

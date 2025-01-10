@@ -89,9 +89,9 @@ const Results = ({ formData, resetCalculator }) => {
     datasets: [{
       label: 'Carbon Footprint (Tons CO₂e)',
       data: [
-        (currentResult?.total || 0) / 1000,  // Convert kg to tons
-        1.6,  // Indian average in tons
-        3.9   // Global average in tons
+        (currentResult?.total || 0) / 1000,
+        2.1,  // Updated from 1.6
+        4.7   // Updated from 3.9
       ],
       backgroundColor: chartColors.backgroundColor.slice(1, 4).reverse(),
       borderColor: chartColors.borderColor.slice(1, 4).reverse(),

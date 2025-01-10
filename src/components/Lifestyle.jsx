@@ -26,20 +26,39 @@ const Lifestyle = ({ formData, updateFormData }) => {
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { id: 'vegan', label: '🌱 Vegan' },
-                { id: 'vegetarian', label: '🥦 Vegetarian' },
-                { id: 'ovoVegetarian', label: '🍳 Ovo-Vegetarian' },
-                { id: 'nonVegetarian', label: '🍗 Non-Vegetarian' }
+                { 
+                  id: 'vegan', 
+                  label: '🌱 Vegan',
+                  description: 'Plant-based diet only, no animal products'
+                },
+                { 
+                  id: 'vegetarian', 
+                  label: '🥦 Vegetarian',
+                  description: 'Plant-based + dairy products'
+                },
+                { 
+                  id: 'ovoVegetarian', 
+                  label: '🍳 Ovo-Vegetarian',
+                  description: 'Vegetarian + eggs'
+                },
+                { 
+                  id: 'nonVegetarian', 
+                  label: '🍗 Non-Vegetarian',
+                  description: 'All types of food including meat'
+                }
               ].map(diet => (
                 <div
                   key={diet.id}
                   onClick={() => updateFormData('lifestyle', { selectedDiet: diet.id })}
-                  className={`p-3 border-2 rounded-lg cursor-pointer text-center
+                  className={`p-3 border-2 rounded-lg cursor-pointer
                     ${formData?.selectedDiet === diet.id 
                       ? 'border-green-500 bg-green-50' 
                       : 'border-gray-200 hover:border-green-300'}`}
                 >
-                  {diet.label}
+                  <div className="text-center">
+                    <div className="mb-1">{diet.label}</div>
+                    <p className="text-xs text-gray-600">{diet.description}</p>
+                  </div>
                 </div>
               ))}
             </div>

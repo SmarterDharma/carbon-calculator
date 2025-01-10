@@ -139,7 +139,8 @@ const Travel = ({ formData, updateFormData }) => {
   return (
     <div className="section-container max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-2">Travel</h2>
-      <p className="text-gray-600 text-sm mb-6">Please enter your travel details for the last year</p>
+      <p className="text-gray-600 text-sm mb-2">Please enter your travel details for the last year</p>
+      <p className="text-gray-600 text-sm mb-6">Note: All trips should be counted as one-way journeys</p>
 
       <div className="space-y-4">
         {renderSection('Domestic Flights', 'DomesticFlights', '✈️', (
