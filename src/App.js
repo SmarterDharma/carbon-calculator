@@ -8,6 +8,7 @@ import Lifestyle from "./components/Lifestyle";
 import Results from "./components/Results";
 import { saveResult } from "./utils/storage";
 import logo from "./sd_logo.svg";
+import { ArrowRight, TreePine, Lightbulb, Globe } from "lucide-react";
 
 function App() {
   const [activeBucket, setActiveBucket] = useState("personal");
@@ -18,6 +19,7 @@ function App() {
     travel: {},
     lifestyle: {},
   });
+  const [showLanding, setShowLanding] = useState(true);
 
   useEffect(() => {
     // Get company from URL params
@@ -348,33 +350,147 @@ function App() {
     return true;
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center relative">
-            <a
-              href="https://www.smarterdharma.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <img src={logo} alt="SDplus Logo" className="h-8 md:h-10" />
-            </a>
-            <h1 className="text-2xl font-bold text-[#22567B] absolute left-1/2 -translate-x-1/2">
-              Dharma Meter
-            </h1>
+  const renderLandingPage = () => (
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 pt-16 pb-12">
+        <div className="text-center max-w-3xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 mb-6">
+            Discover Your Environmental Impact
+          </h1>
+          <p className="text-xl text-gray-600 mb-8">
+            Understanding your carbon footprint is the first step towards a
+            sustainable future.
+            <br /> Join thousands making a difference.
+          </p>
+          <button
+            onClick={() => setShowLanding(false)}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 rounded-lg text-lg inline-flex items-center"
+          >
+            Calculate Your Footprint
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+            <div className="space-y-4">
+              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                <TreePine className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold">Personalized Analysis</h3>
+              <p className="text-gray-600">
+                Get detailed insights about your carbon footprint based on your
+                lifestyle and daily habits.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+            <div className="space-y-4">
+              <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Lightbulb className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold">Smart Recommendations</h3>
+              <p className="text-gray-600">
+                Receive tailored suggestions to reduce your environmental impact
+                and save money.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow">
+            <div className="space-y-4">
+              <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <Globe className="h-6 w-6 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-semibold">Track Progress</h3>
+              <p className="text-gray-600">
+                Monitor your improvement over time and see your contribution to
+                a greener planet.
+              </p>
+            </div>
           </div>
         </div>
-      </header>
-      <Navigation
-        activeBucket={activeBucket}
-        onNavigationClick={handleNavigationClick}
-      />
-      <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
-        {renderActiveBucket()}
-        {activeBucket !== "result" && renderNavigationButtons()}
-      </main>
+      </div>
+
+      {/* Stats Section */}
+      <div className="bg-green-600 text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-4xl font-bold mb-2">1,000+</div>
+              <div className="text-green-100">Users Calculated</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold mb-2">15%</div>
+              <div className="text-green-100">Average Reduction</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold mb-2">5,000+</div>
+              <div className="text-green-100">Trees Worth Saved</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {showLanding ? (
+        <>
+          <header className="bg-white shadow-sm">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center relative">
+                <a
+                  href="https://www.smarterdharma.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <img src={logo} alt="SDplus Logo" className="h-8 md:h-10" />
+                </a>
+                <h1 className="text-2xl font-bold text-[#22567B] absolute left-1/2 -translate-x-1/2">
+                  Dharma Meter
+                </h1>
+              </div>
+            </div>
+          </header>
+          {renderLandingPage()}
+        </>
+      ) : (
+        <>
+          <header className="bg-white shadow-sm">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex items-center relative">
+                <a
+                  href="https://www.smarterdharma.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <img src={logo} alt="SDplus Logo" className="h-8 md:h-10" />
+                </a>
+                <h1 className="text-2xl font-bold text-[#22567B] absolute left-1/2 -translate-x-1/2">
+                  Dharma Meter
+                </h1>
+              </div>
+            </div>
+          </header>
+          <Navigation
+            activeBucket={activeBucket}
+            onNavigationClick={handleNavigationClick}
+          />
+          <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
+            {renderActiveBucket()}
+            {activeBucket !== "result" && renderNavigationButtons()}
+          </main>
+        </>
+      )}
     </div>
   );
 }
