@@ -8,6 +8,7 @@ import Lifestyle from "./components/Lifestyle";
 import Results from "./components/Results";
 import { saveResult } from "./utils/storage";
 import logo from "./sd_logo.svg";
+import LandingPage from "./components/LandingPage";
 
 function App() {
   const [activeBucket, setActiveBucket] = useState("personal");
@@ -18,6 +19,7 @@ function App() {
     travel: {},
     lifestyle: {},
   });
+  const [showLanding, setShowLanding] = useState(true);
 
   useEffect(() => {
     // Get company from URL params
@@ -348,6 +350,10 @@ function App() {
     return true;
   };
 
+  const handleGetStarted = () => {
+    setShowLanding(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow-sm">
@@ -367,14 +373,21 @@ function App() {
           </div>
         </div>
       </header>
-      <Navigation
-        activeBucket={activeBucket}
-        onNavigationClick={handleNavigationClick}
-      />
-      <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
-        {renderActiveBucket()}
-        {activeBucket !== "result" && renderNavigationButtons()}
-      </main>
+
+      {showLanding ? (
+        <LandingPage onGetStarted={handleGetStarted} />
+      ) : (
+        <>
+          <Navigation
+            activeBucket={activeBucket}
+            onNavigationClick={handleNavigationClick}
+          />
+          <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-4xl">
+            {renderActiveBucket()}
+            {activeBucket !== "result" && renderNavigationButtons()}
+          </main>
+        </>
+      )}
     </div>
   );
 }
